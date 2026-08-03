@@ -51,7 +51,24 @@ async function replyError(interaction, message) {
   }
 }
 
+/**
+ * Interactions déjà prises en charge par ce processus.
+ * Discord peut renvoyer un même événement, et deux instances du bot
+ * lancées en parallèle traitent chacune l'interaction : la seconde
+ * réponse échoue alors en 40060 / 10062. On ignore les rejeux au lieu
+ * de polluer les logs et de laisser une action à moitié faite.
+ */
+const handled = new Set();
+
 export async function routeInteraction(interaction) {
+  if (handled.has(interaction.id)) {
+    console.warn(`[Lola] Interaction ${interaction.id} déjà traitée — ignorée.`);
+    return;
+  }
+  handled.add(interaction.id);
+  // Les interactions expirent après 15 min : inutile de les garder plus.
+  setTimeout(() => handled.delete(interaction.id), 15 * 60_000).unref?.();
+
   try {
     if (interaction.isChatInputCommand()) {
       const command = interaction.client.commands.get(interaction.commandName);
@@ -77,7 +94,21 @@ export async function routeInteraction(interaction) {
       await handler(interaction, arg);
     }
   } catch (err) {
-    console.error(`[Lola] Erreur sur l'interaction « ${interaction.customId ?? interaction.commandName} » :`, err);
+    // 10062 (inconnue/expirée) et 40060 (déjà acquittée) signifient que
+    // Discord n'accepte plus de réponse : répondre relancerait une
+    // erreur. On journalise sans réessayer.
+    if (err.code === 10062 || err.code === 40060) {
+      console.warn(
+        `[Lola] Interaction « ${interaction.customId ?? interaction.commandName} » ` +
+          `non réactive (${err.code}). Une seule instance du bot doit tourner à la fois.`
+      );
+      return;
+    }
+
+    console.error(
+      `[Lola] Erreur sur l'interaction « ${interaction.customId ?? interaction.commandName} » :`,
+      err
+    );
     await replyError(
       interaction,
       "Une erreur est survenue. Réessayez, et prévenez un administrateur si cela persiste."

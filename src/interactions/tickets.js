@@ -100,8 +100,23 @@ export async function onCreateSubmit(interaction, category) {
 
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const parentId = getConfig(interaction.guildId, 'category_tickets');
   const staffRoleId = getConfig(interaction.guildId, 'role_staff');
+
+  // La catégorie a pu être supprimée depuis /setup : sans cette
+  // vérification, Discord ignore silencieusement le parent et crée le
+  // salon à la racine du serveur.
+  const savedParent = getConfig(interaction.guildId, 'category_tickets');
+  let parentId = null;
+  if (savedParent) {
+    const parent = await interaction.guild.channels.fetch(savedParent).catch(() => null);
+    if (parent?.type === ChannelType.GuildCategory) {
+      parentId = parent.id;
+    } else {
+      console.warn(
+        `[Lola] Catégorie de tickets ${savedParent} introuvable — relancez /setup.`
+      );
+    }
+  }
 
   const overwrites = [
     {

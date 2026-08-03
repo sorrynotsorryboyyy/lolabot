@@ -103,12 +103,19 @@ export async function onSubmit(interaction, arg) {
   });
 
   // En MP, interaction.guild est null : on récupère le serveur du ticket.
+  let published = false;
   const guild = await interaction.client.guilds.fetch(ticket.guild_id).catch(() => null);
-  if (guild) {
+  if (!guild) {
+    console.warn(`[Lola] Avis #${ticketId} : serveur ${ticket.guild_id} introuvable.`);
+  } else {
     const avisChannelId = getConfig(ticket.guild_id, 'channel_avis');
-    if (avisChannelId) {
+    if (!avisChannelId) {
+      console.warn('[Lola] Avis : channel_avis non configuré — lancez /setup.');
+    } else {
       const channel = await guild.channels.fetch(avisChannelId).catch(() => null);
-      if (channel?.isTextBased()) {
+      if (!channel?.isTextBased()) {
+        console.warn(`[Lola] Avis : salon ${avisChannelId} introuvable ou non textuel.`);
+      } else {
         // Avis anonyme : ni pseudo ni avatar. L'identité reste
         // consultable en base (table reviews) si besoin.
         const embed = new EmbedBuilder()
@@ -119,14 +126,31 @@ export async function onSubmit(interaction, arg) {
           .setFooter({ text: 'Client anonyme' })
           .setTimestamp();
 
-        await channel.send({ embeds: [embed] }).catch(() => {});
+        try {
+          await channel.send({ embeds: [embed] });
+          published = true;
+        } catch (err) {
+          console.error(
+            `[Lola] Publication de l'avis impossible dans #${channel.name} : ${err.message}\n` +
+              "       Vérifiez que le bot peut écrire dans ce salon."
+          );
+        }
       }
     }
   }
 
+  // L'avis est enregistré en base quoi qu'il arrive ; on ne prétend pas
+  // qu'il est publié si l'envoi a échoué.
   return interaction.reply({
     embeds: [
-      successEmbed('Merci !', `Votre avis **${stars(rating)}** a bien été enregistré.`),
+      published
+        ? successEmbed('Merci !', `Votre avis **${stars(rating)}** a bien été publié.`)
+        : warnEmbed(
+            'Avis enregistré',
+            `Votre note **${stars(rating)}** a bien été prise en compte, ` +
+              'mais elle n\'a pas pu être publiée automatiquement. ' +
+              'L\'équipe en a été informée.'
+          ),
     ],
     flags: MessageFlags.Ephemeral,
   });
