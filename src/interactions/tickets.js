@@ -32,9 +32,9 @@ import { fetchAllMessages, buildTranscript } from '../lib/transcript.js';
 import { buildReviewPrompt } from './avis.js';
 
 export const TICKET_CATEGORIES = {
-  achat: { label: 'Achat d\'une photo', emoji: '🖼️', description: 'Acheter un tirage ou un fichier existant' },
-  commande: { label: 'Commande personnalisée', emoji: '🎨', description: 'Demander une création sur mesure' },
-  live: { label: 'Session live', emoji: '📸', description: 'Réserver une prestation en direct' },
+  achat: { label: 'Achat de contenu', emoji: '📸', description: 'Photo à l\'unité ou pack' },
+  commande: { label: 'Contenu personnalisé', emoji: '✨', description: 'Création selon vos envies' },
+  live: { label: 'Live privé', emoji: '🎥', description: 'Réserver une session en direct' },
   support: { label: 'Support / question', emoji: '💬', description: 'Une question, un souci de commande' },
   autre: { label: 'Autre', emoji: '❓', description: 'Tout autre sujet' },
 };
@@ -75,7 +75,7 @@ export async function onOpenSelect(interaction) {
           .setLabel('Sujet')
           .setStyle(TextInputStyle.Short)
           .setMaxLength(100)
-          .setPlaceholder('Ex. Tirage A3 « Aube sur la baie »')
+          .setPlaceholder('Ex. Pack 10 photos')
           .setRequired(true)
       ),
       new ActionRowBuilder().addComponents(
@@ -84,7 +84,7 @@ export async function onOpenSelect(interaction) {
           .setLabel('Détails de votre demande')
           .setStyle(TextInputStyle.Paragraph)
           .setMaxLength(1000)
-          .setPlaceholder('Format, quantité, délai souhaité, budget...')
+          .setPlaceholder('Contenu souhaité, quantité, délai, budget...')
           .setRequired(true)
       )
     );
@@ -351,7 +351,7 @@ export async function onSaleButton(interaction) {
           .setLabel('Article vendu')
           .setStyle(TextInputStyle.Short)
           .setMaxLength(120)
-          .setPlaceholder('Ex. Tirage A3 « Aube sur la baie »')
+          .setPlaceholder('Ex. Pack 10 photos')
           .setRequired(true)
       ),
       new ActionRowBuilder().addComponents(

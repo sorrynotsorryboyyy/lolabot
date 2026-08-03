@@ -5,77 +5,123 @@
 export const DEFAULT_CONTENT = {
   bienvenue: {
     channel: 'bienvenue',
-    title: '✨ Bienvenue dans mon univers',
+    title: '🔞 Bienvenue chez Lola',
     body:
-      "Bonjour et merci de votre passage !\n\n" +
-      "Vous trouverez ici mes **photographies d'art** : tirages, fichiers numériques et créations sur mesure.\n\n" +
+      "Bienvenue et merci de votre visite !\n\n" +
+      "Vous trouverez ici mes **photographies réservées à un public majeur (18+)** : collections exclusives, contenus numériques et créations personnalisées.\n\n" +
+      '⚠️ **En restant sur ce serveur, vous confirmez être âgé(e) d’au moins 18 ans.**\n\n' +
       '**Pour bien démarrer**\n' +
-      '• 🖼️ Parcourez les <#PREVIEWS> pour découvrir mon travail\n' +
-      '• 📋 Consultez les <#SERVICES> et les <#TARIFS>\n' +
-      '• 🎫 Ouvrez un ticket dans <#TICKETS> pour toute demande\n' +
-      '• ⭐ Les retours des clients sont dans <#AVIS>\n\n' +
-      "N'hésitez pas : chaque projet mérite qu'on en discute.",
+      '• 📸 Découvrez mes aperçus dans <#PREVIEWS>\n' +
+      '• 💎 Consultez les <#SERVICES> et les <#TARIFS>\n' +
+      '• 🎥 Retrouvez les prestations live dans <#TARIFS_LIVE>\n' +
+      '• 🎫 Ouvrez un ticket dans <#TICKETS> pour toute commande\n' +
+      '• ⭐ Consultez les avis dans <#AVIS>\n\n' +
+      "Merci de respecter les règles du serveur et de rester courtois lors de nos échanges.",
   },
 
   services: {
     channel: 'services',
-    title: '📋 Mes services',
+    title: '💎 Mes services',
     body:
-      '**🖼️ Tirages d\'art**\n' +
-      "Impression sur papier fine art, encres pigmentaires, signée et numérotée. Plusieurs formats disponibles.\n\n" +
-      '**💾 Fichiers numériques**\n' +
-      'Haute résolution, retouchés, livrés avec licence d\'utilisation personnelle.\n\n' +
-      '**🎨 Commandes personnalisées**\n' +
-      "Une idée précise ? Je crée une pièce unique selon votre univers, votre espace et vos couleurs.\n\n" +
-      '**📸 Sessions live**\n' +
-      "Shooting en direct ou accompagnement en visio, pour une création en temps réel. Voir <#TARIFS_LIVE>.\n\n" +
-      '**📦 Livraison**\n' +
-      'Emballage soigné et protégé. Expédition suivie.\n\n' +
-      "> Pour toute demande, ouvrez un ticket dans <#TICKETS>.",
+      '**📸 Photos exclusives**\n' +
+      'Photos en haute qualité disponibles à l’unité ou en packs.\n\n' +
+      '**✨ Contenus personnalisés**\n' +
+      'Créations réalisées selon vos envies, dans les limites de mes prestations proposées.\n\n' +
+      '**🎥 Sessions live privées**\n' +
+      'Moments en direct sur réservation. Voir <#TARIFS_LIVE>.\n\n' +
+      '**💾 Livraison numérique**\n' +
+      'Envoi rapide après validation du paiement.\n\n' +
+      '**🔒 Discrétion & confidentialité**\n' +
+      'Toutes les commandes sont traitées de manière privée et confidentielle.\n\n' +
+      '> Pour toute demande ou information, ouvrez un ticket dans <#TICKETS>.',
   },
 
   tarifs_intro: {
     channel: 'tarifs',
-    title: '💶 Tarifs — photographies',
+    title: '💶 Tarifs — Photos',
     body:
-      'Voici ma grille tarifaire pour les tirages et fichiers numériques.\n' +
-      "Les prix s'entendent TTC, hors frais de livraison.\n\n" +
-      '> Une demande particulière ? Ouvrez un ticket dans <#TICKETS>.',
+      'Retrouvez ici les tarifs de mes contenus photo.\n\n' +
+      '📩 Les contenus sont envoyés rapidement après validation de la commande.\n\n' +
+      '> Une demande personnalisée ? Ouvrez un ticket dans <#TICKETS>.',
   },
 
   tarifs_live_intro: {
     channel: 'tarifs-live',
-    title: '📸 Tarifs — sessions live',
+    title: '🎥 Tarifs — Lives privés',
     body:
-      'Prestations réalisées **en direct** : shooting live, session en visio ou création en temps réel.\n' +
-      'Réservation via un ticket, selon mes disponibilités.\n\n' +
-      '> Pour réserver, ouvrez un ticket dans <#TICKETS>.',
+      'Les sessions live sont réalisées uniquement sur réservation.\n\n' +
+      '📅 Les créneaux dépendent de mes disponibilités.\n\n' +
+      '> Pour réserver une session, ouvrez un ticket dans <#TICKETS>.',
   },
 
   previews: {
     channel: 'previews',
-    title: '🖼️ Aperçus',
+    title: '📸 Aperçus',
     body:
-      'Un aperçu de mes travaux récents.\n\n' +
-      'Les images publiées ici sont en **basse résolution** et peuvent comporter un filigrane.\n' +
-      'Les fichiers livrés aux clients sont en haute résolution, sans marquage.\n\n' +
-      '> Une pièce vous plaît ? Ouvrez un ticket dans <#TICKETS> en précisant sa référence.',
+      'Découvrez quelques aperçus de mon contenu.\n\n' +
+      'Les images publiées ici sont volontairement en qualité réduite et peuvent comporter un filigrane.\n' +
+      'Les versions achetées sont envoyées en qualité originale, sans filigrane.\n\n' +
+      '> Une photo vous intéresse ? Indiquez sa référence dans <#TICKETS>.',
   },
 };
 
-/** Grilles tarifaires initiales, modifiables via /tarif. */
+/**
+ * Grilles tarifaires initiales, modifiables via /tarif.
+ */
 export const DEFAULT_PRICING = {
   photo: [
-    { label: 'Fichier numérique HD', price: '25 €', detail: 'Haute résolution, licence personnelle' },
-    { label: 'Tirage A4 (21 × 29,7 cm)', price: '45 €', detail: 'Papier fine art, signé' },
-    { label: 'Tirage A3 (29,7 × 42 cm)', price: '75 €', detail: 'Papier fine art, signé et numéroté' },
-    { label: 'Tirage A2 (42 × 59,4 cm)', price: '120 €', detail: 'Édition limitée' },
-    { label: 'Commande personnalisée', price: 'Sur devis', detail: 'Selon le projet' },
+    {
+      label: '📸 1 photo',
+      price: '3,50 €',
+      detail: 'Envoi instantané',
+    },
+    {
+      label: '📸 Pack 5 photos',
+      price: '12,00 €',
+      detail: 'Envoi instantané',
+    },
+    {
+      label: '📸 Pack 10 photos',
+      price: '20,00 €',
+      detail: 'Envoi instantané',
+    },
+    {
+      label: '📸 Pack 20 photos',
+      price: '30,00 €',
+      detail: 'Envoi instantané',
+    },
+    {
+      label: '✨ 1 photo personnalisée',
+      price: '4,00 €',
+      detail: 'Création sur demande',
+    },
+    {
+      label: '✨ Pack 5 personnalisées',
+      price: '16,00 €',
+      detail: 'Création sur demande',
+    },
+    {
+      label: '✨ Pack 10 personnalisées',
+      price: '24,00 €',
+      detail: 'Création sur demande',
+    },
   ],
+
   live: [
-    { label: 'Session visio (30 min)', price: '40 €', detail: 'Échange et direction artistique' },
-    { label: 'Shooting live (1 h)', price: '90 €', detail: 'Prise de vue en direct, retouches incluses' },
-    { label: 'Shooting live (2 h)', price: '160 €', detail: 'Formule complète, plusieurs ambiances' },
-    { label: 'Création en temps réel', price: 'Sur devis', detail: 'Selon la demande et la durée' },
+    {
+      label: '🎥 Live privé (5 min)',
+      price: '15 €',
+      detail: 'Session privée',
+    },
+    {
+      label: '🎥 Live privé (10 min)',
+      price: '30 €',
+      detail: 'Session privée',
+    },
+    {
+      label: '🎥 Live privé (15 min)',
+      price: '40 €',
+      detail: 'Session privée',
+    },
   ],
 };

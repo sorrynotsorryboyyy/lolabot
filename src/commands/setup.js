@@ -35,19 +35,20 @@ const stripDecoration = (name) =>
     .replace(/^[-\s]+|[-\s]+$/g, '')
     .toLowerCase();
 
+/** Normalise un nom de rôle : casse, accents et espaces ignorés. */
+const normalizeName = (name) =>
+  name
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
+    .toLowerCase();
+
 /** Retrouve un salon déjà enregistré, sinon le crée. */
 async function ensureChannel(guild, key, name, options) {
   const savedId = getConfig(guild.id, `channel_${key}`);
   if (savedId) {
     const existing = await guild.channels.fetch(savedId).catch(() => null);
-    // Réutilise le salon, en le renommant si le format a changé
-    // (ajout des émojis sur une installation antérieure).
-    if (existing) {
-      if (existing.name !== name) {
-        await existing.setName(name, 'Lola — mise à jour du nom').catch(() => {});
-      }
-      return existing;
-    }
+    if (existing) return syncChannel(existing, name, options);
   }
 
   // Comparaison sur la partie textuelle : retrouve « tarifs » aussi bien
@@ -58,15 +59,37 @@ async function ensureChannel(guild, key, name, options) {
   );
   if (byName) {
     setConfig(guild.id, `channel_${key}`, byName.id);
-    if (byName.name !== name) {
-      await byName.setName(name, 'Lola — mise à jour du nom').catch(() => {});
-    }
-    return byName;
+    return syncChannel(byName, name, options);
   }
 
   const created = await guild.channels.create({ name, ...options });
   setConfig(guild.id, `channel_${key}`, created.id);
   return created;
+}
+
+/**
+ * Aligne un salon existant sur la configuration attendue (nom, sujet,
+ * permissions) au lieu d'en créer un doublon.
+ */
+async function syncChannel(channel, name, options = {}) {
+  const patch = {};
+  if (channel.name !== name) patch.name = name;
+  if (options.topic !== undefined && channel.topic !== options.topic) {
+    patch.topic = options.topic;
+  }
+  if (options.permissionOverwrites) {
+    patch.permissionOverwrites = options.permissionOverwrites;
+  }
+  if (options.parent !== undefined && channel.parentId !== options.parent) {
+    patch.parent = options.parent;
+  }
+
+  if (Object.keys(patch).length === 0) return channel;
+
+  return channel.edit({ ...patch, reason: 'Lola — synchronisation /setup' }).catch((err) => {
+    console.warn(`[Lola] Mise à jour de #${channel.name} impossible : ${err.message}`);
+    return channel;
+  });
 }
 
 export async function execute(interaction) {
@@ -99,7 +122,13 @@ export async function execute(interaction) {
     let verifiedRole = null;
     const savedRoleId = getConfig(guild.id, 'role_verified');
     if (savedRoleId) verifiedRole = guild.roles.cache.get(savedRoleId) ?? null;
-    if (!verifiedRole) verifiedRole = guild.roles.cache.find((r) => r.name === ROLES.verified) ?? null;
+
+    // Repli par nom (insensible à la casse et aux accents) si la base a
+    // été réinitialisée : évite de créer un second rôle « Vérifié ».
+    if (!verifiedRole) {
+      const target = normalizeName(ROLES.verified);
+      verifiedRole = guild.roles.cache.find((r) => normalizeName(r.name) === target) ?? null;
+    }
 
     if (!verifiedRole) {
       verifiedRole = await guild.roles.create({
@@ -159,17 +188,17 @@ export async function execute(interaction) {
     });
     const tarifs = await ensureChannel(guild, 'tarifs', CHANNELS.tarifs, {
       type: ChannelType.GuildText,
-      topic: 'Grille tarifaire — photographies',
+      topic: 'Grille tarifaire — photos',
       permissionOverwrites: readOnly,
     });
     const tarifsLive = await ensureChannel(guild, 'tarifs_live', CHANNELS.tarifsLive, {
       type: ChannelType.GuildText,
-      topic: 'Grille tarifaire — sessions live',
+      topic: 'Grille tarifaire — lives privés',
       permissionOverwrites: readOnly,
     });
     const previews = await ensureChannel(guild, 'previews', CHANNELS.previews, {
       type: ChannelType.GuildText,
-      topic: 'Aperçus des travaux récents',
+      topic: 'Aperçus du contenu disponible',
       permissionOverwrites: readOnly,
     });
     const avis = await ensureChannel(guild, 'avis', CHANNELS.avis, {
@@ -200,17 +229,35 @@ export async function execute(interaction) {
     steps.push('Salons créés ou réutilisés (9)');
 
     /* ------------------------------------------- catégorie des tickets */
+    const CATEGORY_NAME = '🎫 Tickets';
     let ticketCategory = null;
+
     const savedCat = getConfig(guild.id, 'category_tickets');
     if (savedCat) ticketCategory = await guild.channels.fetch(savedCat).catch(() => null);
 
+    // Recherche par nom si la base a été réinitialisée : évite de créer
+    // une seconde catégorie identique.
+    if (!ticketCategory) {
+      ticketCategory =
+        guild.channels.cache.find(
+          (c) =>
+            c.type === ChannelType.GuildCategory &&
+            stripDecoration(c.name) === stripDecoration(CATEGORY_NAME)
+        ) ?? null;
+      if (ticketCategory) steps.push('Catégorie **Tickets** réutilisée');
+    }
+
     if (!ticketCategory) {
       ticketCategory = await guild.channels.create({
-        name: '🎫 Tickets',
+        name: CATEGORY_NAME,
         type: ChannelType.GuildCategory,
         permissionOverwrites: staffOnly,
       });
       steps.push('Catégorie **Tickets** créée');
+    } else if (ticketCategory.name !== CATEGORY_NAME) {
+      await ticketCategory
+        .setName(CATEGORY_NAME, 'Lola — synchronisation /setup')
+        .catch(() => {});
     }
     setConfig(guild.id, 'category_tickets', ticketCategory.id);
 

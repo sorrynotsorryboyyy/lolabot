@@ -34,7 +34,9 @@ export const verificationPanel = () => ({
   embeds: [
     brandEmbed(
       '🔐 Vérification obligatoire',
-      "Pour accéder au serveur, cliquez sur le bouton ci-dessous et recopiez le code affiché.\n\n" +
+      '🔞 **Ce serveur est réservé à un public majeur.**\n' +
+        'En vous vérifiant, vous confirmez être âgé(e) d\'au moins 18 ans.\n\n' +
+        'Cliquez sur le bouton ci-dessous et recopiez le code affiché.\n\n' +
         'Cette étape protège la communauté des robots et des raids. Merci de votre compréhension !'
     ),
   ],
@@ -112,7 +114,7 @@ export function pricingEmbed(guildId, grid) {
   const items = listPricing(guildId, grid);
 
   const embed = brandEmbed(
-    block?.title ?? (grid === 'live' ? '📸 Tarifs — sessions live' : '💶 Tarifs — photographies'),
+    block?.title ?? (grid === 'live' ? '🎥 Tarifs — Lives privés' : '💶 Tarifs — Photos'),
     resolveChannelRefs(guildId, block?.body ?? '')
   );
 

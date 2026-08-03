@@ -109,15 +109,14 @@ export async function onSubmit(interaction, arg) {
     if (avisChannelId) {
       const channel = await guild.channels.fetch(avisChannelId).catch(() => null);
       if (channel?.isTextBased()) {
+        // Avis anonyme : ni pseudo ni avatar. L'identité reste
+        // consultable en base (table reviews) si besoin.
         const embed = new EmbedBuilder()
           .setColor(rating >= 4 ? COLORS.success : rating === 3 ? COLORS.warn : COLORS.danger)
-          .setAuthor({
-            name: interaction.user.tag,
-            iconURL: interaction.user.displayAvatarURL(),
-          })
+          .setAuthor({ name: 'Avis client vérifié' })
           .setTitle(`${stars(rating)} — ${rating}/5`)
           .setDescription(comment ?? '_Aucun commentaire._')
-          .setFooter({ text: `Ticket #${ticketId}` })
+          .setFooter({ text: 'Client anonyme' })
           .setTimestamp();
 
         await channel.send({ embeds: [embed] }).catch(() => {});

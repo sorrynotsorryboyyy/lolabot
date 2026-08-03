@@ -4,8 +4,8 @@ import { successEmbed, errorEmbed, infoEmbed } from '../lib/embeds.js';
 import { pricingEmbed, publishContent } from '../lib/panels.js';
 
 const GRIDS = [
-  { name: 'Photographies', value: 'photo' },
-  { name: 'Sessions live', value: 'live' },
+  { name: 'Photos', value: 'photo' },
+  { name: 'Lives privés', value: 'live' },
 ];
 
 export const data = new SlashCommandBuilder()

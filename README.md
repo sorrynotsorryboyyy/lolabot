@@ -1,9 +1,9 @@
-# Lola 🎨
+# Lola 🔞
 
-Bot Discord pour serveur de vente de **photographies d'art**.
+Bot Discord pour serveur de vente de **contenu photo réservé aux adultes (18+)**.
 
 - 🔐 **Vérification anti-bot** — captcha image, filtre des comptes récents, détection de raid et verrouillage automatique
-- 🎫 **Tickets** — 5 catégories, suivi des ventes, transcript HTML archivé, avis clients ⭐
+- 🎫 **Tickets** — 5 catégories, suivi des ventes, transcript HTML archivé, avis clients ⭐ (**anonymes**)
 - 🛡️ **Panel admin** — bannissements (bannir / débannir / lister)
 - ⚙️ **Installation en une commande** — `/setup` crée salons, rôles, permissions et publie tous les contenus
 
@@ -56,7 +56,7 @@ Lancez ensuite `/setup` sur votre serveur.
 
 | Commande | Accès | Description |
 |---|---|---|
-| `/setup` | Administrateur | Crée salons, rôles, permissions et publie les panneaux. Relançable sans risque. |
+| `/setup` | Administrateur | Crée salons, rôles, permissions et publie les panneaux. **Idempotent** : relançable autant de fois que voulu, il met à jour l'existant (nom, sujet, permissions) sans jamais créer de doublon. |
 | `/contenu voir` · `modifier` | Gérer le serveur | Consulte et modifie les textes publiés (le message Discord est mis à jour automatiquement) |
 | `/tarif ajouter` · `liste` · `supprimer` | Gérer le serveur | Gère les deux grilles tarifaires |
 | `/lockdown on` · `off` · `statut` | Gérer le serveur | Suspend ou rétablit la vérification |
@@ -65,16 +65,18 @@ Lancez ensuite `/setup` sur votre serveur.
 
 | Salon | Rôle |
 |---|---|
-| `#verification` | Captcha — seul salon visible avant vérification |
-| `#bienvenue` | Présentation du serveur |
-| `#services` | Prestations proposées |
-| `#tarifs` | Grille tarifaire — photographies |
-| `#tarifs-live` | Grille tarifaire — sessions live |
-| `#previews` | Aperçus des travaux |
-| `#avis` | Avis clients (publiés automatiquement) |
-| `#tickets` | Panneau d'ouverture de ticket |
-| `#logs-lola` | Journal des actions (staff) |
-| `#panel-admin` | Panneau de bannissement (staff) |
+| `🔐・verification` | Captcha + mention 18+ — seul salon visible avant vérification |
+| `👋・bienvenue` | Présentation du serveur |
+| `📋・services` | Prestations proposées |
+| `💶・tarifs` | Grille tarifaire — photos |
+| `📸・tarifs-live` | Grille tarifaire — lives privés |
+| `🖼️・previews` | Aperçus du contenu |
+| `⭐・avis` | Avis clients, publiés **anonymement** |
+| `🎫・tickets` | Panneau d'ouverture de ticket |
+| `📁・logs-lola` | Journal des actions (staff) |
+| `🛡️・panel-admin` | Panneau de bannissement (staff) |
+
+Les noms sont modifiables dans [`src/config.js`](src/config.js) (objet `CHANNELS`) : relancez `/setup`, les salons existants sont renommés.
 
 ---
 

@@ -63,7 +63,7 @@ export const CHANNELS = {
   bienvenue: '👋・bienvenue',
   services: '📋・services',
   tarifs: '💶・tarifs',
-  tarifsLive: '📸・tarifs-live',
+  tarifsLive: '🎥 ・tarifs-sexcam',
   avis: '⭐・avis',
   tickets: '🎫・tickets',
   previews: '🖼️・previews',
