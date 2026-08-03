@@ -1,4 +1,7 @@
-import Database from 'better-sqlite3';
+// node:sqlite est intégré à Node (>= 22) : aucun module natif à compiler.
+// better-sqlite3 imposait un « node-gyp rebuild » qui échoue sur Railway,
+// dont l'image de build n'a pas Python.
+import { DatabaseSync } from 'node:sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,10 +14,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dir = path.dirname(config.dbPath);
 fs.mkdirSync(dir, { recursive: true });
 
-export const db = new Database(config.dbPath);
+export const db = new DatabaseSync(config.dbPath);
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
+db.exec('PRAGMA journal_mode = WAL');
+db.exec('PRAGMA foreign_keys = ON');
 
 const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 db.exec(schema);

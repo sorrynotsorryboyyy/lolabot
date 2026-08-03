@@ -14,6 +14,8 @@ Bot Discord pour serveur de vente de **photographies d'art**.
 - **Node.js 22 ou supérieur** (testé sur Node 24)
 - Une application Discord ([Developer Portal](https://discord.com/developers/applications))
 
+> La base de données utilise `node:sqlite`, **intégré à Node**. Aucun module à compiler : ni Python, ni node-gyp, ni build tools.
+
 ## Installation locale
 
 ```bash
@@ -152,6 +154,7 @@ assets/fonts/            police du captcha (versionnée volontairement)
 | Captcha illisible sur Railway | `assets/fonts/` absent du dépôt |
 | Données perdues après déploiement | Volume `/data` non monté, ou `DB_PATH` non défini |
 | Commandes absentes | Attendez quelques secondes, puis rechargez Discord (Ctrl+R) |
+| `node-gyp` / « Could not find any Python » au build | Une dépendance native s'est glissée dans le projet. Aucune n'est requise : vérifiez qu'aucun paquet ajouté n'a de script `install`. |
 
 ## Licence
 

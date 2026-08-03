@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@napi-rs/canvas": "1.0.3",
-    "better-sqlite3": "13.0.2",
     "discord.js": "14.27.0",
     "dotenv": "17.4.2"
   },
