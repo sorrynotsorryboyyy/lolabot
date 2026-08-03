@@ -129,6 +129,14 @@ export const closeTicket = (id, closedBy, transcript) =>
     )
     .run(now(), closedBy, transcript ?? null, id);
 
+export const listOpenTickets = (guildId, userId) =>
+  db
+    .prepare(
+      `SELECT * FROM tickets
+       WHERE guild_id = ? AND user_id = ? AND status = 'ouvert' ORDER BY id`
+    )
+    .all(guildId, userId);
+
 export const countOpenTickets = (guildId, userId) =>
   db
     .prepare(

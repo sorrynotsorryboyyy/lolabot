@@ -15,6 +15,7 @@ import {
   getTicketByChannel,
   closeTicket,
   countOpenTickets,
+  listOpenTickets,
   recordSale,
   getSalesByTicket,
   getConfig,
@@ -41,6 +42,26 @@ export const TICKET_CATEGORIES = {
 
 const MAX_OPEN_PER_USER = 2;
 
+/**
+ * Ferme les tickets marqués « ouvert » dont le salon n'existe plus
+ * (supprimé à la main, ou création interrompue). Sans cette purge, le
+ * compteur reste bloqué et l'utilisateur ne peut plus ouvrir de ticket.
+ * @returns {Promise<number>} nombre de tickets purgés
+ */
+async function purgeOrphanTickets(guild, userId) {
+  let purged = 0;
+  for (const ticket of listOpenTickets(guild.id, userId)) {
+    const channel = ticket.channel_id
+      ? await guild.channels.fetch(ticket.channel_id).catch(() => null)
+      : null;
+    if (!channel) {
+      closeTicket(ticket.id, 'système (salon introuvable)', null);
+      purged++;
+    }
+  }
+  return purged;
+}
+
 /** Étape 1 — choix de la catégorie dans le select menu. */
 export async function onOpenSelect(interaction) {
   const category = interaction.values?.[0];
@@ -53,12 +74,28 @@ export async function onOpenSelect(interaction) {
     });
   }
 
-  if (countOpenTickets(interaction.guildId, interaction.user.id) >= MAX_OPEN_PER_USER) {
+  // Purge d'abord les tickets dont le salon n'existe plus : sans cela un
+  // ticket resté « ouvert » en base bloquerait l'utilisateur pour de bon.
+  const stale = await purgeOrphanTickets(interaction.guild, interaction.user.id);
+  if (stale > 0) {
+    console.warn(
+      `[Lola] ${stale} ticket(s) orphelin(s) fermé(s) pour ${interaction.user.tag} ` +
+        '(salon supprimé hors du bot).'
+    );
+  }
+
+  const open = countOpenTickets(interaction.guildId, interaction.user.id);
+  if (open >= MAX_OPEN_PER_USER) {
+    const list = listOpenTickets(interaction.guildId, interaction.user.id)
+      .map((t) => `• <#${t.channel_id}>`)
+      .join('\n');
+
     return interaction.reply({
       embeds: [
         warnEmbed(
           'Trop de tickets ouverts',
-          `Vous avez déjà **${MAX_OPEN_PER_USER}** tickets en cours. Fermez-en un avant d'en ouvrir un nouveau.`
+          `Vous avez **${open}** ticket(s) en cours (maximum : ${MAX_OPEN_PER_USER}).\n\n` +
+            `${list}\n\nFermez-en un avant d'en ouvrir un nouveau.`
         ),
       ],
       flags: MessageFlags.Ephemeral,

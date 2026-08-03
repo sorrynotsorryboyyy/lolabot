@@ -53,10 +53,9 @@ async function replyError(interaction, message) {
 
 /**
  * Interactions déjà prises en charge par ce processus.
- * Discord peut renvoyer un même événement, et deux instances du bot
- * lancées en parallèle traitent chacune l'interaction : la seconde
- * réponse échoue alors en 40060 / 10062. On ignore les rejeux au lieu
- * de polluer les logs et de laisser une action à moitié faite.
+ * Garde-fou contre un rejeu du même événement (reconnexion WebSocket,
+ * ou deux instances connectées au même token) : sans lui, la seconde
+ * exécution laisse une action à moitié faite.
  */
 const handled = new Set();
 
@@ -97,10 +96,23 @@ export async function routeInteraction(interaction) {
     // 10062 (inconnue/expirée) et 40060 (déjà acquittée) signifient que
     // Discord n'accepte plus de réponse : répondre relancerait une
     // erreur. On journalise sans réessayer.
-    if (err.code === 10062 || err.code === 40060) {
+    if (err.code === 10062) {
+      // Discord ferme la fenêtre de réponse au bout de 3 s. Presque
+      // toujours une latence réseau (connexion saturée, appel vocal en
+      // cours) plutôt qu'un défaut de code.
       console.warn(
-        `[Lola] Interaction « ${interaction.customId ?? interaction.commandName} » ` +
-          `non réactive (${err.code}). Une seule instance du bot doit tourner à la fois.`
+        `[Lola] « ${interaction.customId ?? interaction.commandName} » : Discord n'a pas reçu ` +
+          'la réponse dans les 3 s (10062). Connexion lente ou saturée — réessayez.'
+      );
+      return;
+    }
+
+    if (err.code === 40060) {
+      // Interaction déjà acquittée : double réponse dans le code, ou
+      // deux instances du bot connectées au même token.
+      console.warn(
+        `[Lola] « ${interaction.customId ?? interaction.commandName} » : interaction déjà ` +
+          'acquittée (40060). Vérifiez qu\'un seul bot tourne sur ce token.'
       );
       return;
     }
