@@ -57,6 +57,8 @@ Lancez ensuite `/setup` sur votre serveur.
 | Commande | Accès | Description |
 |---|---|---|
 | `/setup` | Administrateur | Crée salons, rôles, permissions et publie les panneaux. **Idempotent** : relançable autant de fois que voulu, il met à jour l'existant (nom, sujet, permissions) sans jamais créer de doublon. |
+| `/reinit textes` · `tarifs` · `tout` | Administrateur | Recharge les textes et tarifs depuis `src/lib/defaultContent.js` et met à jour les messages publiés. Nécessaire après avoir modifié ce fichier : `/setup` n'écrase jamais un contenu déjà publié. |
+| `/purge` | Administrateur | ⚠️ **Destructif.** Supprime les salons, la catégorie Tickets, le rôle Vérifié et toutes les données du serveur. Confirmation obligatoire. À utiliser avant un `/setup` pour repartir de zéro. |
 | `/contenu voir` · `modifier` | Gérer le serveur | Consulte et modifie les textes publiés (le message Discord est mis à jour automatiquement) |
 | `/tarif ajouter` · `liste` · `supprimer` | Gérer le serveur | Gère les deux grilles tarifaires |
 | `/lockdown on` · `off` · `statut` | Gérer le serveur | Suspend ou rétablit la vérification |
