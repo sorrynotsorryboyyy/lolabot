@@ -1,0 +1,38 @@
+# Secrets — NE JAMAIS COMMITTER
+.env
+.env.local
+.env.*.local
+
+# Dépendances
+node_modules/
+
+# Base de données SQLite (locale)
+data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+*-wal
+*-shm
+
+# Transcripts générés
+transcripts/
+
+# Logs
+*.log
+npm-debug.log*
+logs/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Éditeurs
+.vscode/
+.idea/
+
+# IMPORTANT : assets/ est volontairement suivi par git.
+# La police du captcha doit être présente dans le conteneur Railway.
