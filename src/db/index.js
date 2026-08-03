@@ -267,6 +267,52 @@ export function forceContent({ guildId, key, title, body }) {
 export const clearPricing = (guildId, grid) =>
   db.prepare('DELETE FROM pricing WHERE guild_id = ? AND grid = ?').run(guildId, grid);
 
+/* ---------------------------------------------------------------- purge */
+
+/** Tables contenant des données rattachées à un serveur. */
+const GUILD_TABLES = [
+  'config_entries',
+  'captchas',
+  'verified_members',
+  'tickets',
+  'sales',
+  'reviews',
+  'bans',
+  'raid_events',
+  'content_blocks',
+  'pricing',
+];
+
+/**
+ * Efface toutes les données d'un serveur. Transactionnel : en cas
+ * d'erreur, rien n'est supprimé.
+ * @returns {Record<string, number>} nombre de lignes par table
+ */
+export function purgeGuildData(guildId) {
+  const counts = {};
+
+  // node:sqlite n'a pas de db.transaction() (contrairement à
+  // better-sqlite3) : on pilote la transaction à la main.
+  db.exec('BEGIN');
+  try {
+    for (const table of GUILD_TABLES) {
+      const before = db
+        .prepare(`SELECT COUNT(*) AS n FROM ${table} WHERE guild_id = ?`)
+        .get(guildId).n;
+      if (before > 0) {
+        db.prepare(`DELETE FROM ${table} WHERE guild_id = ?`).run(guildId);
+        counts[table] = before;
+      }
+    }
+    db.exec('COMMIT');
+  } catch (err) {
+    db.exec('ROLLBACK');
+    throw err;
+  }
+
+  return counts;
+}
+
 /* --------------------------------------------------------------- tarifs */
 
 export const addPricing = ({ guildId, grid, label, price, detail, position = 0 }) =>

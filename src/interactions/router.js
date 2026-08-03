@@ -5,6 +5,7 @@ import * as tickets from './tickets.js';
 import * as avis from './avis.js';
 import * as admin from './admin.js';
 import { onEditSubmit } from '../commands/contenu.js';
+import { onConfirm as onPurgeConfirm, onCancel as onPurgeCancel } from '../commands/purge.js';
 
 /**
  * Handlers de composants, indexés par « domaine:action ».
@@ -33,6 +34,9 @@ const handlers = {
   'admin:list': admin.onListBans,
 
   'contenu:edit': onEditSubmit,
+
+  'purge:confirm': onPurgeConfirm,
+  'purge:cancel': onPurgeCancel,
 };
 
 async function replyError(interaction, message) {
