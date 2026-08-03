@@ -61,12 +61,12 @@ export const config = {
 export const CHANNELS = {
   verification: '🔐・verification',
   bienvenue: '👋・bienvenue',
-  services: '📋・services',
+  services: '🔞・services',
   tarifs: '💶・tarifs',
-  tarifsLive: '🎥 ・tarifs-sexcam',
+  tarifsLive: '🎥・tarifs-sexcam',
   avis: '⭐・avis',
   tickets: '🎫・tickets',
-  previews: '🖼️・previews',
+  previews: '👀・previews',
   logs: '📁・logs-lola',
   panelAdmin: '🛡️・panel-admin',
 };

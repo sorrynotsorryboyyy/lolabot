@@ -230,6 +230,35 @@ export function upsertContent({ guildId, key, title, body, channelId, messageId 
 export const getContent = (guildId, key) =>
   db.prepare('SELECT * FROM content_blocks WHERE guild_id = ? AND key = ?').get(guildId, key);
 
+/**
+ * Écrit un texte en écrasant la valeur existante, tout en conservant
+ * channel_id/message_id — contrairement à upsertContent(), dont le
+ * COALESCE préserve l'ancien contenu. Utilisé par /reinit pour
+ * recharger depuis defaultContent.js.
+ */
+const stmtForceContent = db.prepare(
+  `INSERT INTO content_blocks (guild_id, key, title, body, channel_id, message_id, updated_at)
+   VALUES (@guild_id, @key, @title, @body, NULL, NULL, @updated_at)
+   ON CONFLICT (guild_id, key) DO UPDATE SET
+     title      = @title,
+     body       = @body,
+     updated_at = @updated_at`
+);
+
+export function forceContent({ guildId, key, title, body }) {
+  stmtForceContent.run({
+    guild_id: guildId,
+    key,
+    title: title ?? null,
+    body: body ?? '',
+    updated_at: now(),
+  });
+}
+
+/** Vide une grille tarifaire pour la recharger depuis le fichier. */
+export const clearPricing = (guildId, grid) =>
+  db.prepare('DELETE FROM pricing WHERE guild_id = ? AND grid = ?').run(guildId, grid);
+
 /* --------------------------------------------------------------- tarifs */
 
 export const addPricing = ({ guildId, grid, label, price, detail, position = 0 }) =>
