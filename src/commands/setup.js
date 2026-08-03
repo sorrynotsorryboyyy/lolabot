@@ -23,19 +23,44 @@ export const data = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
   .setDMPermission(false);
 
+/**
+ * Retire émojis et séparateurs d'un nom de salon pour ne garder que le
+ * texte : « 💶・tarifs » et « tarifs » sont ainsi reconnus comme un
+ * même salon.
+ */
+const stripDecoration = (name) =>
+  name
+    .replace(/[\p{Extended_Pictographic}\u{FE0F}\u{200D}]/gu, '')
+    .replace(/[・·|]/g, '')
+    .replace(/^[-\s]+|[-\s]+$/g, '')
+    .toLowerCase();
+
 /** Retrouve un salon déjà enregistré, sinon le crée. */
 async function ensureChannel(guild, key, name, options) {
   const savedId = getConfig(guild.id, `channel_${key}`);
   if (savedId) {
     const existing = await guild.channels.fetch(savedId).catch(() => null);
-    if (existing) return existing;
+    // Réutilise le salon, en le renommant si le format a changé
+    // (ajout des émojis sur une installation antérieure).
+    if (existing) {
+      if (existing.name !== name) {
+        await existing.setName(name, 'Lola — mise à jour du nom').catch(() => {});
+      }
+      return existing;
+    }
   }
 
+  // Comparaison sur la partie textuelle : retrouve « tarifs » aussi bien
+  // que « 💶・tarifs ».
+  const bare = stripDecoration(name);
   const byName = guild.channels.cache.find(
-    (c) => c.name === name && c.type === ChannelType.GuildText
+    (c) => c.type === ChannelType.GuildText && stripDecoration(c.name) === bare
   );
   if (byName) {
     setConfig(guild.id, `channel_${key}`, byName.id);
+    if (byName.name !== name) {
+      await byName.setName(name, 'Lola — mise à jour du nom').catch(() => {});
+    }
     return byName;
   }
 
@@ -79,7 +104,7 @@ export async function execute(interaction) {
     if (!verifiedRole) {
       verifiedRole = await guild.roles.create({
         name: ROLES.verified,
-        color: 0x2ecc71,
+        colors: { primaryColor: 0x2ecc71 },
         reason: 'Lola — rôle des membres vérifiés',
       });
       steps.push(`Rôle **${ROLES.verified}** créé`);

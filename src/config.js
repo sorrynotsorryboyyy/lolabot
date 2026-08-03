@@ -53,18 +53,22 @@ export const config = {
   },
 };
 
-/** Noms canoniques des salons et rôles créés par /setup. */
+/**
+ * Noms des salons créés par /setup.
+ * Discord met les noms en minuscules et remplace les espaces par des
+ * tirets, mais conserve les émojis tels quels.
+ */
 export const CHANNELS = {
-  verification: 'verification',
-  bienvenue: 'bienvenue',
-  services: 'services',
-  tarifs: 'tarifs',
-  tarifsLive: 'tarifs-live',
-  avis: 'avis',
-  tickets: 'tickets',
-  previews: 'previews',
-  logs: 'logs-lola',
-  panelAdmin: 'panel-admin',
+  verification: '🔐・verification',
+  bienvenue: '👋・bienvenue',
+  services: '📋・services',
+  tarifs: '💶・tarifs',
+  tarifsLive: '📸・tarifs-live',
+  avis: '⭐・avis',
+  tickets: '🎫・tickets',
+  previews: '🖼️・previews',
+  logs: '📁・logs-lola',
+  panelAdmin: '🛡️・panel-admin',
 };
 
 export const ROLES = {

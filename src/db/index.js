@@ -200,9 +200,13 @@ export const logRaidEvent = ({ guildId, kind, userId, detail }) =>
 
 /* ---------------------------------------------------- contenus éditables */
 
+// body est NOT NULL : à l'insertion, un appel qui ne fournit que
+// channel_id/message_id (publishContent) doit retomber sur '' plutôt
+// que violer la contrainte. Le COALESCE de l'UPDATE préserve la valeur
+// existante lors des mises à jour partielles.
 const stmtUpsertContent = db.prepare(
   `INSERT INTO content_blocks (guild_id, key, title, body, channel_id, message_id, updated_at)
-   VALUES (@guild_id, @key, @title, @body, @channel_id, @message_id, @updated_at)
+   VALUES (@guild_id, @key, @title, COALESCE(@body, ''), @channel_id, @message_id, @updated_at)
    ON CONFLICT (guild_id, key) DO UPDATE SET
      title      = COALESCE(@title, title),
      body       = COALESCE(@body, body),
