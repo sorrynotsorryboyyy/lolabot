@@ -7,6 +7,8 @@ Bot Discord pour serveur de vente de **contenu photo réservé aux adultes (18+)
 - 🛡️ **Panel admin** — bannissements (bannir / débannir / lister)
 - ⚙️ **Installation en une commande** — `/setup` crée salons, rôles, permissions et publie tous les contenus
 
+> **Reproduire ce bot pour un autre serveur ?** Voir [TEMPLATE.md](TEMPLATE.md) — un prompt prêt à l'emploi avec des champs à remplir (nom, produits, tarifs), incluant les pièges rencontrés en production.
+
 ---
 
 ## Prérequis
