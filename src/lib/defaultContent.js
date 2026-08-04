@@ -3,6 +3,98 @@
  * qui met aussi à jour le message Discord déjà publié.
  */
 export const DEFAULT_CONTENT = {
+  reglement: {
+    channel: 'reglement',
+    title: '📜 Règlement du serveur',
+    body:
+      '🔞 **Serveur strictement réservé aux personnes majeures.**\n' +
+      'En restant ici, vous certifiez avoir **18 ans ou plus**. Tout compte de mineur est banni sans avertissement.\n\n' +
+      '**💗 1 · Respect**\n' +
+      'Aucun harcèlement, insulte, propos haineux ou discriminatoire. On reste courtois en toutes circonstances.\n\n' +
+      '**🔒 2 · Confidentialité**\n' +
+      'Le contenu acheté est **strictement personnel**. Toute revente, capture ou partage entraîne un bannissement définitif.\n\n' +
+      '**✨ 3 · Consentement**\n' +
+      'Aucune demande insistante ni requête hors des prestations proposées. Un refus est un refus.\n\n' +
+      '**🎀 4 · Achats**\n' +
+      'Toute commande passe par un ticket dans <#TICKETS>. Aucun paiement ailleurs, aucune exception.\n\n' +
+      '**🌙 5 · Publicité**\n' +
+      'Aucune promotion d\'un autre serveur ou service sans autorisation.\n\n' +
+      '**💔 Sanctions**\n' +
+      'Avertissement, puis exclusion, puis bannissement selon la gravité. Les points 1, 2 et 3 mènent directement au bannissement.\n\n' +
+      '> En vous vérifiant dans <#VERIFICATION>, vous acceptez ce règlement.',
+  },
+
+  annonces: {
+    channel: 'annonces',
+    title: '📢 Annonces',
+    body:
+      'Toutes mes actualités sont publiées ici 💫\n\n' +
+      '• 🎁 Nouveaux packs et offres limitées\n' +
+      '• 🎥 Créneaux de lives privés\n' +
+      '• 💎 Publications sur mes autres plateformes\n' +
+      '• ✨ Promotions ponctuelles\n\n' +
+      '> Activez les notifications pour ne rien manquer 🔔',
+  },
+
+  reseaux: {
+    channel: 'reseaux',
+    title: '🌐 Mes réseaux',
+    body:
+      'Retrouvez-moi ailleurs 💗\n\n' +
+      '**𝕏 · Twitter**\n_à compléter_\n\n' +
+      '**📸 · Instagram**\n_à compléter_\n\n' +
+      '**💎 · MYM**\n_à compléter_\n\n' +
+      '**🎬 · Autres**\n_à compléter_\n\n' +
+      '> Modifiable avec `/contenu modifier` ✨',
+  },
+
+  mym: {
+    channel: 'mym',
+    title: '💎 Mon MYM',
+    body:
+      'Toutes mes nouvelles publications MYM sont annoncées ici 💫\n\n' +
+      '**Pourquoi s\'abonner ?**\n' +
+      '• 📸 Du contenu exclusif, publié régulièrement\n' +
+      '• 💬 Des échanges en privé\n' +
+      '• ✨ Des demandes personnalisées\n\n' +
+      '> Le lien de mon profil est dans <#RESEAUX> 🎀',
+  },
+
+  paiement: {
+    channel: 'paiement',
+    title: '💳 Moyens de paiement',
+    body:
+      'Plusieurs options sont acceptées 💗\n\n' +
+      '**🅿️ PayPal**\n' +
+      'Envoi en **« Entre proches »**. Les coordonnées sont communiquées dans votre ticket.\n\n' +
+      '**₿ Cryptomonnaies**\n' +
+      'BTC · ETH · USDT — discret et sans intermédiaire. Adresses fournies dans le ticket.\n\n' +
+      '**🏦 Virement · Revolut · Lydia**\n' +
+      'Transfert entre particuliers, coordonnées transmises en privé.\n\n' +
+      '**💫 Comment ça marche**\n' +
+      '1. Ouvrez un ticket dans <#TICKETS>\n' +
+      '2. Choisissez votre contenu et votre moyen de paiement\n' +
+      '3. Recevez les coordonnées en privé\n' +
+      '4. Livraison dès réception 🎀\n\n' +
+      '> ⚠️ Je ne demande **jamais** de paiement en dehors d\'un ticket. Méfiez-vous des usurpateurs.',
+  },
+
+  discussion: {
+    channel: 'discussion',
+    title: '💭 Bienvenue dans le salon de discussion',
+    body:
+      'Un espace pour échanger entre membres 💗\n\n' +
+      '**À faire**\n' +
+      '• ✨ Papoter, faire connaissance\n' +
+      '• 🎀 Partager vos retours\n' +
+      '• 💫 Participer aux discussions\n\n' +
+      '**À éviter**\n' +
+      '• 🚫 Contenu explicite (réservé aux tickets)\n' +
+      '• 🚫 Demandes insistantes\n' +
+      '• 🚫 Publicité\n\n' +
+      '> Le règlement s\'applique ici aussi 📜',
+  },
+
   bienvenue: {
     channel: 'bienvenue',
     title: '🔞 Bienvenue chez Lola',

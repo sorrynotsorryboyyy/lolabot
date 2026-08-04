@@ -64,23 +64,35 @@ Lancez ensuite `/setup` sur votre serveur.
 | `/contenu voir` · `modifier` | Gérer le serveur | Consulte et modifie les textes publiés (le message Discord est mis à jour automatiquement) |
 | `/tarif ajouter` · `liste` · `supprimer` | Gérer le serveur | Gère les deux grilles tarifaires |
 | `/lockdown on` · `off` · `statut` | Gérer le serveur | Suspend ou rétablit la vérification |
+| `/giveaway lancer` · `terminer` · `relancer` · `liste` | Gérer le serveur | Concours avec tirage automatique. Durées : `30m`, `6h`, `3j`. Les giveaways en cours survivent à un redéploiement. |
+| `/mym poster` | Gérer le serveur | Annonce une publication MYM dans le salon dédié (message, lien, image, ping optionnel) |
 
 ## Salons créés par `/setup`
 
-| Salon | Rôle |
+17 salons répartis en 6 catégories :
+
+| Catégorie | Salons |
 |---|---|
-| `🔐・verification` | Captcha + mention 18+ — seul salon visible avant vérification |
-| `👋・bienvenue` | Présentation du serveur |
-| `📋・services` | Prestations proposées |
-| `💶・tarifs` | Grille tarifaire — photos |
-| `📸・tarifs-live` | Grille tarifaire — lives privés |
-| `🖼️・previews` | Aperçus du contenu |
-| `⭐・avis` | Avis clients, publiés **anonymement** |
-| `🎫・tickets` | Panneau d'ouverture de ticket |
-| `📁・logs-lola` | Journal des actions (staff) |
-| `🛡️・panel-admin` | Panneau de bannissement (staff) |
+| 🌸 ENTRÉE | `📜・reglement` · `🔐・verification` |
+| 💗 DÉCOUVRIR | `👋・bienvenue` · `📢・annonces` · `🌐・reseaux` · `💎・mym` |
+| 🛍️ BOUTIQUE | `✨・services` · `💗・tarifs` · `🎥・tarifs-live` · `💳・paiement` · `👀・previews` · `⭐・avis` |
+| 💬 COMMUNAUTÉ | `💭・discussion` (écriture) · `🎁・giveaways` · `🎟️・tickets` |
+| 🎟️ TICKETS | salons privés créés à la demande |
+| 🔒 STAFF | `📁・logs-lola` · `🛡️・panel-admin` |
+
+`🔐・verification` est le seul salon visible **avant** vérification, et disparaît une fois le captcha validé. Les avis sont publiés **anonymement**.
 
 Les noms sont modifiables dans [`src/config.js`](src/config.js) (objet `CHANNELS`) : relancez `/setup`, les salons existants sont renommés.
+
+---
+
+## Mode communauté & rôles
+
+`/setup` crée cinq rôles **sans les attribuer** : `🔞 18+`, `💗 Femme`, `💙 Homme`, `🏳️‍⚧️ Trans`, `💜 Non-binaire`.
+
+L'attribution se configure dans **Paramètres du serveur → Intégration → Onboarding**, où vous les proposez à la sélection.
+
+> ⚠️ L'onboarding Discord ne permet pas de rendre une réponse **obligatoire** : la confirmation 18+ y est déclarative. La vraie barrière reste le **captcha** de `🔐・verification`, doublé de la mention 18+ affichée avant tout accès.
 
 ---
 

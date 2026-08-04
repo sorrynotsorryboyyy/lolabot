@@ -59,18 +59,73 @@ export const config = {
  * tirets, mais conserve les émojis tels quels.
  */
 export const CHANNELS = {
+  // ENTRÉE
+  reglement: '📜・reglement',
   verification: '🔐・verification',
+  // DÉCOUVRIR
   bienvenue: '👋・bienvenue',
-  services: '🔞・services',
-  tarifs: '💶・tarifs',
-  tarifsLive: '🎥・tarifs-sexcam',
-  avis: '⭐・avis',
-  tickets: '🎫・tickets',
+  annonces: '📢・annonces',
+  reseaux: '🌐・reseaux',
+  mym: '💎・mym',
+  // BOUTIQUE
+  services: '✨・services',
+  tarifs: '💗・tarifs',
+  tarifsLive: '🎥・tarifs-live',
+  paiement: '💳・paiement',
   previews: '👀・previews',
+  avis: '⭐・avis',
+  // COMMUNAUTÉ
+  discussion: '💭・discussion',
+  giveaways: '🎁・giveaways',
+  tickets: '🎟️・tickets',
+  // STAFF
   logs: '📁・logs-lola',
   panelAdmin: '🛡️・panel-admin',
+};
+
+/** Catégories regroupant les salons, dans l'ordre d'affichage. */
+export const CATEGORIES = {
+  entree: '🌸 ─ ENTRÉE',
+  decouvrir: '💗 ─ DÉCOUVRIR',
+  boutique: '🛍️ ─ BOUTIQUE',
+  communaute: '💬 ─ COMMUNAUTÉ',
+  tickets: '🎟️ ─ TICKETS',
+  staff: '🔒 ─ STAFF',
+};
+
+/** Quel salon va dans quelle catégorie. */
+export const CHANNEL_PARENTS = {
+  reglement: 'entree',
+  verification: 'entree',
+  bienvenue: 'decouvrir',
+  annonces: 'decouvrir',
+  reseaux: 'decouvrir',
+  mym: 'decouvrir',
+  services: 'boutique',
+  tarifs: 'boutique',
+  tarifs_live: 'boutique',
+  paiement: 'boutique',
+  previews: 'boutique',
+  avis: 'boutique',
+  discussion: 'communaute',
+  giveaways: 'communaute',
+  tickets: 'communaute',
+  logs: 'staff',
+  panel_admin: 'staff',
 };
 
 export const ROLES = {
   verified: 'Vérifié',
 };
+
+/**
+ * Rôles créés par /setup mais jamais attribués par le bot :
+ * l'attribution passe par l'onboarding natif de Discord.
+ */
+export const COMMUNITY_ROLES = [
+  { key: 'adulte', name: '🔞 18+', color: 0xff8fa3 },
+  { key: 'femme', name: '💗 Femme', color: 0xf4a6c0 },
+  { key: 'homme', name: '💙 Homme', color: 0xa8c8e8 },
+  { key: 'trans', name: '🏳️‍⚧️ Trans', color: 0xc8a2e0 },
+  { key: 'nonbinaire', name: '💜 Non-binaire', color: 0xb8a2e0 },
+];

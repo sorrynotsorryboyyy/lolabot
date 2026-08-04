@@ -33,11 +33,11 @@ import { fetchAllMessages, buildTranscript } from '../lib/transcript.js';
 import { buildReviewPrompt } from './avis.js';
 
 export const TICKET_CATEGORIES = {
-  achat: { label: 'Achat de contenu', emoji: '📸', description: 'Photo à l\'unité ou pack' },
+  achat: { label: 'Achat de contenu', emoji: '💗', description: 'Photo à l\'unité ou pack' },
   commande: { label: 'Contenu personnalisé', emoji: '✨', description: 'Création selon vos envies' },
-  live: { label: 'Live privé', emoji: '🎥', description: 'Réserver une session en direct' },
-  support: { label: 'Support / question', emoji: '💬', description: 'Une question, un souci de commande' },
-  autre: { label: 'Autre', emoji: '❓', description: 'Tout autre sujet' },
+  live: { label: 'Live privé', emoji: '🎀', description: 'Réserver une session en direct' },
+  support: { label: 'Support / question', emoji: '💭', description: 'Une question, un souci de commande' },
+  autre: { label: 'Autre', emoji: '🌙', description: 'Tout autre sujet' },
 };
 
 const MAX_OPEN_PER_USER = 2;

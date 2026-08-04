@@ -281,6 +281,73 @@ export function forceContent({ guildId, key, title, body }) {
 export const clearPricing = (guildId, grid) =>
   db.prepare('DELETE FROM pricing WHERE guild_id = ? AND grid = ?').run(guildId, grid);
 
+/* ------------------------------------------------------------ giveaways */
+
+export const createGiveaway = ({ guildId, channelId, prize, winners, endsAt, createdBy }) =>
+  db
+    .prepare(
+      `INSERT INTO giveaways (guild_id, channel_id, prize, winners, ends_at, status, created_by, created_at)
+       VALUES (?, ?, ?, ?, ?, 'en cours', ?, ?)`
+    )
+    .run(guildId, channelId, prize, winners, endsAt, createdBy, now()).lastInsertRowid;
+
+export const setGiveawayMessage = (id, messageId) =>
+  db.prepare('UPDATE giveaways SET message_id = ? WHERE id = ?').run(messageId, id);
+
+export const getGiveaway = (id) =>
+  db.prepare('SELECT * FROM giveaways WHERE id = ?').get(id);
+
+/** Giveaways encore en cours — utilisé pour replanifier après un redémarrage. */
+export const listPendingGiveaways = () =>
+  db.prepare("SELECT * FROM giveaways WHERE status = 'en cours' ORDER BY ends_at").all();
+
+export const listGiveaways = (guildId, limit = 15) =>
+  db
+    .prepare('SELECT * FROM giveaways WHERE guild_id = ? ORDER BY id DESC LIMIT ?')
+    .all(guildId, limit);
+
+export const endGiveaway = (id, status = 'termine') =>
+  db.prepare('UPDATE giveaways SET status = ?, ended_at = ? WHERE id = ?').run(status, now(), id);
+
+/** @returns {boolean} true si l'inscription est nouvelle, false si déjà inscrit. */
+export function addGiveawayEntry(giveawayId, userId, guildId) {
+  try {
+    db.prepare(
+      `INSERT INTO giveaway_entries (giveaway_id, user_id, guild_id, created_at)
+       VALUES (?, ?, ?, ?)`
+    ).run(giveawayId, userId, guildId, now());
+    return true;
+  } catch {
+    // Violation de clé primaire : l'utilisateur participe déjà.
+    return false;
+  }
+}
+
+export const removeGiveawayEntry = (giveawayId, userId) =>
+  db
+    .prepare('DELETE FROM giveaway_entries WHERE giveaway_id = ? AND user_id = ?')
+    .run(giveawayId, userId);
+
+export const countGiveawayEntries = (giveawayId) =>
+  db.prepare('SELECT COUNT(*) AS n FROM giveaway_entries WHERE giveaway_id = ?').get(giveawayId).n;
+
+export const listGiveawayEntries = (giveawayId) =>
+  db
+    .prepare('SELECT user_id FROM giveaway_entries WHERE giveaway_id = ?')
+    .all(giveawayId)
+    .map((r) => r.user_id);
+
+/** Tirage sans remise : un même participant ne peut pas gagner deux fois. */
+export function drawWinners(giveawayId, count) {
+  const pool = listGiveawayEntries(giveawayId);
+  const winners = [];
+  while (winners.length < count && pool.length > 0) {
+    const i = Math.floor(Math.random() * pool.length);
+    winners.push(pool.splice(i, 1)[0]);
+  }
+  return winners;
+}
+
 /* ---------------------------------------------------------------- purge */
 
 /** Tables contenant des données rattachées à un serveur. */
@@ -295,6 +362,8 @@ const GUILD_TABLES = [
   'raid_events',
   'content_blocks',
   'pricing',
+  'giveaway_entries',
+  'giveaways',
 ];
 
 /**

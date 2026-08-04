@@ -4,6 +4,7 @@ import './db/index.js';
 import { registerCaptchaFont } from './lib/captcha.js';
 import { routeInteraction } from './interactions/router.js';
 import { handleGuildMemberAdd } from './events/guildMemberAdd.js';
+import { restoreGiveaways } from './interactions/giveaways.js';
 import { commands } from './commands/index.js';
 import { deployCommands } from './deploy-commands.js';
 
@@ -25,6 +26,13 @@ for (const cmd of commands) client.commands.set(cmd.data.name, cmd);
 
 client.once(Events.ClientReady, async (c) => {
   console.log(`[Lola] Connecté en tant que ${c.user.tag}`);
+  // Les giveaways en cours doivent survivre à un redéploiement.
+  try {
+    restoreGiveaways(c);
+  } catch (err) {
+    console.error('[Lola] Reprise des giveaways impossible :', err.message);
+  }
+
   try {
     await deployCommands(c);
   } catch (err) {

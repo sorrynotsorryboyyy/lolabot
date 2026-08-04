@@ -70,7 +70,7 @@ export function buildTranscript({ ticket, messages, guildName }) {
          font-family:'Segoe UI',system-ui,sans-serif; line-height:1.5; }
   .wrap { max-width:860px; margin:0 auto; }
   header { border-bottom:1px solid #3f4147; padding-bottom:16px; margin-bottom:20px; }
-  h1 { margin:0 0 8px; font-size:1.4rem; color:#f2c14e; }
+  h1 { margin:0 0 8px; font-size:1.4rem; color:#f4a6c0; }
   .meta { font-size:.86rem; color:#a0a4ab; }
   .meta span { margin-right:14px; }
   .msg { padding:10px 12px; border-radius:8px; margin-bottom:8px; background:#2b2d31; }
@@ -79,7 +79,7 @@ export function buildTranscript({ ticket, messages, guildName }) {
   .author { font-weight:600; color:#fff; }
   .ts { color:#8b8f96; }
   .body { word-wrap:break-word; overflow-wrap:anywhere; }
-  .embed { border-left:3px solid #f2c14e; padding:6px 10px; margin-top:6px;
+  .embed { border-left:3px solid #f4a6c0; padding:6px 10px; margin-top:6px;
            background:#232428; border-radius:4px; }
   .etitle { font-weight:600; margin-bottom:2px; }
   .att a { color:#00a8fc; text-decoration:none; }

@@ -115,6 +115,31 @@ CREATE TABLE IF NOT EXISTS content_blocks (
   PRIMARY KEY (guild_id, key)
 );
 
+-- Giveaways.
+CREATE TABLE IF NOT EXISTS giveaways (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  guild_id    TEXT NOT NULL,
+  channel_id  TEXT NOT NULL,
+  message_id  TEXT,
+  prize       TEXT NOT NULL,
+  winners     INTEGER NOT NULL DEFAULT 1,
+  ends_at     INTEGER NOT NULL,
+  status      TEXT NOT NULL DEFAULT 'en cours',  -- en cours | termine | annule
+  created_by  TEXT NOT NULL,
+  created_at  INTEGER NOT NULL,
+  ended_at    INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_giveaways_status ON giveaways (guild_id, status, ends_at);
+
+-- Participations. La clé primaire empêche toute double inscription.
+CREATE TABLE IF NOT EXISTS giveaway_entries (
+  giveaway_id INTEGER NOT NULL REFERENCES giveaways (id) ON DELETE CASCADE,
+  user_id     TEXT NOT NULL,
+  guild_id    TEXT NOT NULL,
+  created_at  INTEGER NOT NULL,
+  PRIMARY KEY (giveaway_id, user_id)
+);
+
 -- Grilles tarifaires (#tarifs et #tarifs-live).
 CREATE TABLE IF NOT EXISTS pricing (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,

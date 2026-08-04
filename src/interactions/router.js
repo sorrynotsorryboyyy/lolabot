@@ -6,6 +6,7 @@ import * as avis from './avis.js';
 import * as admin from './admin.js';
 import { onEditSubmit } from '../commands/contenu.js';
 import { onConfirm as onPurgeConfirm, onCancel as onPurgeCancel } from '../commands/purge.js';
+import { onJoin as onGiveawayJoin } from './giveaways.js';
 
 /**
  * Handlers de composants, indexés par « domaine:action ».
@@ -37,6 +38,8 @@ const handlers = {
 
   'purge:confirm': onPurgeConfirm,
   'purge:cancel': onPurgeCancel,
+
+  'giveaway:join': onGiveawayJoin,
 };
 
 async function replyError(interaction, message) {

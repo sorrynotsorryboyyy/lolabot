@@ -7,7 +7,7 @@ import {
   ButtonStyle,
   MessageFlags,
 } from 'discord.js';
-import { CHANNELS, ROLES } from '../config.js';
+import { CHANNELS, CATEGORIES, ROLES, COMMUNITY_ROLES } from '../config.js';
 import { getConfig, purgeGuildData, listOpenTickets, db } from '../db/index.js';
 import { successEmbed, errorEmbed, warnEmbed } from '../lib/embeds.js';
 
@@ -19,14 +19,21 @@ export const data = new SlashCommandBuilder()
 
 /** Clés de config pointant vers un salon créé par /setup. */
 const CHANNEL_KEYS = [
+  'channel_reglement',
   'channel_verification',
   'channel_bienvenue',
+  'channel_annonces',
+  'channel_reseaux',
+  'channel_mym',
   'channel_services',
   'channel_tarifs',
   'channel_tarifs_live',
-  'channel_avis',
-  'channel_tickets',
+  'channel_paiement',
   'channel_previews',
+  'channel_avis',
+  'channel_discussion',
+  'channel_giveaways',
+  'channel_tickets',
   'channel_logs',
   'channel_panel_admin',
 ];
@@ -72,20 +79,26 @@ async function collectTargets(guild) {
     if (knownNames.includes(stripDecoration(ch.name))) channels.set(ch.id, ch);
   }
 
-  // 3. Catégorie des tickets et tout ce qu'elle contient
-  let category = null;
-  const catId = getConfig(guild.id, 'category_tickets');
-  if (catId) category = await guild.channels.fetch(catId).catch(() => null);
-  if (!category) {
-    category =
-      guild.channels.cache.find(
-        (c) => c.type === ChannelType.GuildCategory && stripDecoration(c.name) === 'tickets'
-      ) ?? null;
+  // 3. Toutes les catégories de Lola, et tout ce qu'elles contiennent
+  const categories = new Map();
+  const knownCatNames = Object.values(CATEGORIES).map(stripDecoration);
+
+  for (const key of Object.keys(CATEGORIES)) {
+    const id = getConfig(guild.id, `category_${key}`);
+    if (!id) continue;
+    const cat = await guild.channels.fetch(id).catch(() => null);
+    if (cat?.type === ChannelType.GuildCategory) categories.set(cat.id, cat);
   }
-  if (category) {
-    for (const ch of guild.channels.cache.values()) {
-      if (ch.parentId === category.id) channels.set(ch.id, ch);
-    }
+
+  for (const c of guild.channels.cache.values()) {
+    if (c.type !== ChannelType.GuildCategory) continue;
+    if (knownCatNames.includes(stripDecoration(c.name))) categories.set(c.id, c);
+  }
+
+  // Les salons rangés dans ces catégories partent avec elles (salons de
+  // tickets notamment, dont les noms sont imprévisibles).
+  for (const ch of guild.channels.cache.values()) {
+    if (ch.parentId && categories.has(ch.parentId)) channels.set(ch.id, ch);
   }
 
   // 4. Salons de tickets encore ouverts en base
@@ -97,16 +110,28 @@ async function collectTargets(guild) {
     if (ch) channels.set(ch.id, ch);
   }
 
-  // 5. Rôle Vérifié
-  let role = null;
-  const roleId = getConfig(guild.id, 'role_verified');
-  if (roleId) role = guild.roles.cache.get(roleId) ?? null;
-  if (!role) {
-    const target = normalizeName(ROLES.verified);
-    role = guild.roles.cache.find((r) => normalizeName(r.name) === target) ?? null;
+  // 5. Rôles : Vérifié + les rôles communautaires
+  const roles = new Map();
+  const roleDefs = [
+    { key: 'verified', name: ROLES.verified },
+    ...COMMUNITY_ROLES.map((r) => ({ key: r.key, name: r.name })),
+  ];
+
+  for (const def of roleDefs) {
+    const id = getConfig(guild.id, `role_${def.key}`);
+    let r = id ? guild.roles.cache.get(id) : null;
+    if (!r) {
+      const target = normalizeName(def.name);
+      r = guild.roles.cache.find((x) => normalizeName(x.name) === target) ?? null;
+    }
+    if (r) roles.set(r.id, r);
   }
 
-  return { channels: [...channels.values()], category, role };
+  return {
+    channels: [...channels.values()],
+    categories: [...categories.values()],
+    roles: [...roles.values()],
+  };
 }
 
 export async function execute(interaction) {
@@ -126,15 +151,15 @@ export async function execute(interaction) {
     });
   }
 
-  const { channels, category, role } = await collectTargets(guild);
+  const { channels, categories, roles } = await collectTargets(guild);
 
   const lines = [];
   lines.push(`**${channels.length}** salon(s)`);
-  if (category) lines.push('la catégorie **Tickets**');
-  if (role) lines.push(`le rôle **${role.name}**`);
-  lines.push('**toutes les données** (config, tickets, ventes, avis, bannissements)');
+  if (categories.length) lines.push(`**${categories.length}** catégorie(s)`);
+  if (roles.length) lines.push(`**${roles.length}** rôle(s) : ${roles.map((r) => r.name).join(', ')}`);
+  lines.push('**toutes les données** (config, tickets, ventes, avis, giveaways)');
 
-  if (channels.length === 0 && !category && !role) {
+  if (channels.length === 0 && categories.length === 0 && roles.length === 0) {
     // Rien à supprimer côté Discord, mais la base peut contenir des restes.
     const counts = purgeGuildData(guild.id);
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -199,7 +224,7 @@ export async function onConfirm(interaction) {
   });
 
   const { guild } = interaction;
-  const { channels, category, role } = await collectTargets(guild);
+  const { channels, categories, roles } = await collectTargets(guild);
 
   let deletedChannels = 0;
   const failures = [];
@@ -219,29 +244,31 @@ export async function onConfirm(interaction) {
     }
   }
 
-  let categoryDeleted = false;
-  if (category) {
+  // Les catégories après les salons : Discord refuse de supprimer une
+  // catégorie qui contient encore des salons.
+  let deletedCategories = 0;
+  for (const cat of categories) {
     try {
-      await category.delete('Lola — /purge');
-      categoryDeleted = true;
+      await cat.delete('Lola — /purge');
+      deletedCategories++;
     } catch (err) {
-      failures.push(`catégorie ${category.name} : ${err.message}`);
+      failures.push(`catégorie ${cat.name} : ${err.message}`);
     }
   }
 
-  let roleDeleted = false;
-  if (role) {
+  let deletedRoles = 0;
+  for (const role of roles) {
     if (role.position >= guild.members.me.roles.highest.position) {
       failures.push(
         `rôle ${role.name} : au-dessus du rôle du bot dans la hiérarchie — supprimez-le à la main`
       );
-    } else {
-      try {
-        await role.delete('Lola — /purge');
-        roleDeleted = true;
-      } catch (err) {
-        failures.push(`rôle ${role.name} : ${err.message}`);
-      }
+      continue;
+    }
+    try {
+      await role.delete('Lola — /purge');
+      deletedRoles++;
+    } catch (err) {
+      failures.push(`rôle ${role.name} : ${err.message}`);
     }
   }
 
@@ -250,8 +277,8 @@ export async function onConfirm(interaction) {
 
   const summary = [
     `**${deletedChannels}** salon(s) supprimé(s)`,
-    categoryDeleted ? 'Catégorie **Tickets** supprimée' : null,
-    roleDeleted ? `Rôle **${ROLES.verified}** supprimé` : null,
+    deletedCategories > 0 ? `**${deletedCategories}** catégorie(s) supprimée(s)` : null,
+    deletedRoles > 0 ? `**${deletedRoles}** rôle(s) supprimé(s)` : null,
     `**${rows}** ligne(s) effacée(s) en base`,
   ].filter(Boolean);
 

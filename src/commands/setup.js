@@ -4,7 +4,7 @@ import {
   ChannelType,
   MessageFlags,
 } from 'discord.js';
-import { CHANNELS, ROLES } from '../config.js';
+import { CHANNELS, CATEGORIES, CHANNEL_PARENTS, ROLES, COMMUNITY_ROLES } from '../config.js';
 import { setConfig, getConfig, upsertContent, getContent, listPricing, addPricing } from '../db/index.js';
 import { DEFAULT_CONTENT, DEFAULT_PRICING } from '../lib/defaultContent.js';
 import {
@@ -66,6 +66,49 @@ async function ensureChannel(guild, key, name, options) {
   const created = await guild.channels.create({ name, ...options });
   setConfig(guild.id, `channel_${key}`, created.id);
   return created;
+}
+
+/**
+ * Retrouve une catégorie déjà enregistrée, sinon la crée.
+ * Même stratégie qu'ensureChannel : ID en base, puis repli par nom en
+ * ignorant les émojis, pour ne jamais créer de doublon.
+ */
+async function ensureCategory(guild, key, name, options = {}) {
+  const savedId = getConfig(guild.id, `category_${key}`);
+  if (savedId) {
+    const existing = await guild.channels.fetch(savedId).catch(() => null);
+    if (existing?.type === ChannelType.GuildCategory) {
+      if (existing.name !== name) {
+        await existing.setName(name, 'Lola — synchronisation /setup').catch(() => {});
+      }
+      return existing;
+    }
+  }
+
+  const bare = stripDecoration(name);
+  const byName = guild.channels.cache.find(
+    (c) => c.type === ChannelType.GuildCategory && stripDecoration(c.name) === bare
+  );
+  if (byName) {
+    setConfig(guild.id, `category_${key}`, byName.id);
+    if (byName.name !== name) {
+      await byName.setName(name, 'Lola — synchronisation /setup').catch(() => {});
+    }
+    return byName;
+  }
+
+  try {
+    const created = await guild.channels.create({
+      name,
+      type: ChannelType.GuildCategory,
+      ...options,
+    });
+    setConfig(guild.id, `category_${key}`, created.id);
+    return created;
+  } catch (err) {
+    console.warn(`[Lola] Création de la catégorie « ${name} » impossible : ${err.message}`);
+    return null;
+  }
 }
 
 /**
@@ -139,14 +182,23 @@ export async function execute(interaction) {
       verifiedRole = guild.roles.cache.find((r) => normalizeName(r.name) === target) ?? null;
     }
 
+    const VERIFIED_COLOR = 0xf4a6c0; // rose poudré — cf. COLORS.brand
+
     if (!verifiedRole) {
       verifiedRole = await guild.roles.create({
         name: ROLES.verified,
-        colors: { primaryColor: 0x2ecc71 },
+        colors: { primaryColor: VERIFIED_COLOR },
         reason: 'Lola — rôle des membres vérifiés',
       });
       steps.push(`Rôle **${ROLES.verified}** créé`);
     } else {
+      // Un rôle déjà présent garderait son ancienne couleur : on le
+      // recolore pour suivre la charte.
+      if (verifiedRole.color !== VERIFIED_COLOR) {
+        await verifiedRole
+          .edit({ colors: { primaryColor: VERIFIED_COLOR } }, 'Lola — charte graphique')
+          .catch(() => {});
+      }
       steps.push(`Rôle **${ROLES.verified}** réutilisé`);
     }
     setConfig(guild.id, 'role_verified', verifiedRole.id);
@@ -160,21 +212,6 @@ export async function execute(interaction) {
 
     const everyone = guild.roles.everyone;
 
-    /* --------------------------------------------------------- salons */
-    // #verification : visible par tous, y compris les non-vérifiés.
-    const verifChannel = await ensureChannel(guild, 'verification', CHANNELS.verification, {
-      type: ChannelType.GuildText,
-      topic: 'Validez le captcha pour accéder au serveur',
-      permissionOverwrites: [
-        {
-          id: everyone.id,
-          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
-          deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.AddReactions],
-        },
-        { id: verifiedRole.id, deny: [PermissionFlagsBits.ViewChannel] },
-      ],
-    });
-
     // Salons publics : réservés aux membres vérifiés, en lecture seule.
     const readOnly = [
       { id: everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
@@ -185,98 +222,148 @@ export async function execute(interaction) {
       },
     ];
 
-    const bienvenue = await ensureChannel(guild, 'bienvenue', CHANNELS.bienvenue, {
-      type: ChannelType.GuildText,
-      topic: 'Présentation et informations générales',
-      permissionOverwrites: readOnly,
-    });
-    const services = await ensureChannel(guild, 'services', CHANNELS.services, {
-      type: ChannelType.GuildText,
-      topic: 'Les prestations proposées',
-      permissionOverwrites: readOnly,
-    });
-    const tarifs = await ensureChannel(guild, 'tarifs', CHANNELS.tarifs, {
-      type: ChannelType.GuildText,
-      topic: 'Grille tarifaire — photos',
-      permissionOverwrites: readOnly,
-    });
-    const tarifsLive = await ensureChannel(guild, 'tarifs_live', CHANNELS.tarifsLive, {
-      type: ChannelType.GuildText,
-      topic: 'Grille tarifaire — lives privés',
-      permissionOverwrites: readOnly,
-    });
-    const previews = await ensureChannel(guild, 'previews', CHANNELS.previews, {
-      type: ChannelType.GuildText,
-      topic: 'Aperçus du contenu disponible',
-      permissionOverwrites: readOnly,
-    });
-    const avis = await ensureChannel(guild, 'avis', CHANNELS.avis, {
-      type: ChannelType.GuildText,
-      topic: 'Retours des clients',
-      permissionOverwrites: readOnly,
-    });
-    const tickets = await ensureChannel(guild, 'tickets', CHANNELS.tickets, {
-      type: ChannelType.GuildText,
-      topic: 'Ouvrez un ticket pour toute demande',
-      permissionOverwrites: readOnly,
-    });
-
     // Salons staff : invisibles pour tout le monde sauf permissions serveur.
     const staffOnly = [{ id: everyone.id, deny: [PermissionFlagsBits.ViewChannel] }];
 
-    const logs = await ensureChannel(guild, 'logs', CHANNELS.logs, {
-      type: ChannelType.GuildText,
-      topic: 'Journal des actions de Lola',
-      permissionOverwrites: staffOnly,
-    });
-    const panelAdmin = await ensureChannel(guild, 'panel_admin', CHANNELS.panelAdmin, {
-      type: ChannelType.GuildText,
-      topic: 'Panneau de gestion — bannissements',
-      permissionOverwrites: staffOnly,
-    });
+    // Salon de discussion : les vérifiés peuvent écrire.
+    const readWrite = [
+      { id: everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+      {
+        id: verifiedRole.id,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.AddReactions,
+        ],
+      },
+    ];
 
-    steps.push('Salons créés ou réutilisés (9)');
-
-    /* ------------------------------------------- catégorie des tickets */
-    const CATEGORY_NAME = '🎫 Tickets';
-    let ticketCategory = null;
-
-    const savedCat = getConfig(guild.id, 'category_tickets');
-    if (savedCat) ticketCategory = await guild.channels.fetch(savedCat).catch(() => null);
-
-    // Recherche par nom si la base a été réinitialisée : évite de créer
-    // une seconde catégorie identique.
-    if (!ticketCategory) {
-      ticketCategory =
-        guild.channels.cache.find(
-          (c) =>
-            c.type === ChannelType.GuildCategory &&
-            stripDecoration(c.name) === stripDecoration(CATEGORY_NAME)
-        ) ?? null;
-      if (ticketCategory) steps.push('Catégorie **Tickets** réutilisée');
-    }
-
-    if (!ticketCategory) {
-      ticketCategory = await guild.channels.create({
-        name: CATEGORY_NAME,
-        type: ChannelType.GuildCategory,
-        permissionOverwrites: staffOnly,
+    /* ----------------------------------------------------- catégories */
+    const categoryIds = {};
+    for (const [key, name] of Object.entries(CATEGORIES)) {
+      const cat = await ensureCategory(guild, key, name, {
+        permissionOverwrites: key === 'staff' || key === 'tickets' ? staffOnly : undefined,
       });
-      steps.push('Catégorie **Tickets** créée');
-    } else if (ticketCategory.name !== CATEGORY_NAME) {
-      await ticketCategory
-        .setName(CATEGORY_NAME, 'Lola — synchronisation /setup')
-        .catch(() => {});
+      categoryIds[key] = cat?.id ?? null;
     }
-    setConfig(guild.id, 'category_tickets', ticketCategory.id);
+    steps.push(`Catégories créées ou réutilisées (${Object.keys(CATEGORIES).length})`);
+
+    const parentOf = (channelKey) => categoryIds[CHANNEL_PARENTS[channelKey]] ?? null;
+
+    /* --------------------------------------------------------- salons */
+    const made = {};
+    const mk = (key, chanName, topic, perms) =>
+      ensureChannel(guild, key, chanName, {
+        type: ChannelType.GuildText,
+        topic,
+        parent: parentOf(key),
+        permissionOverwrites: perms,
+      });
+
+    made.reglement = await mk(
+      'reglement',
+      CHANNELS.reglement,
+      'Règlement du serveur — à lire avant tout',
+      [
+        {
+          id: everyone.id,
+          allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
+          deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.AddReactions],
+        },
+      ]
+    );
+
+    // #verification : le seul salon visible AVANT vérification, et masqué après.
+    made.verification = await mk('verification', CHANNELS.verification, 'Validez le captcha pour accéder au serveur', [
+      {
+        id: everyone.id,
+        allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.ReadMessageHistory],
+        deny: [PermissionFlagsBits.SendMessages, PermissionFlagsBits.AddReactions],
+      },
+      { id: verifiedRole.id, deny: [PermissionFlagsBits.ViewChannel] },
+    ]);
+
+    made.bienvenue = await mk('bienvenue', CHANNELS.bienvenue, 'Présentation et informations', readOnly);
+    made.annonces = await mk('annonces', CHANNELS.annonces, 'Actualités et nouveautés', readOnly);
+    made.reseaux = await mk('reseaux', CHANNELS.reseaux, 'Mes autres plateformes', readOnly);
+    made.mym = await mk('mym', CHANNELS.mym, 'Mes publications MYM', readOnly);
+
+    made.services = await mk('services', CHANNELS.services, 'Les prestations proposées', readOnly);
+    made.tarifs = await mk('tarifs', CHANNELS.tarifs, 'Grille tarifaire — photos', readOnly);
+    made.tarifs_live = await mk('tarifs_live', CHANNELS.tarifsLive, 'Grille tarifaire — lives privés', readOnly);
+    made.paiement = await mk('paiement', CHANNELS.paiement, 'Moyens de paiement acceptés', readOnly);
+    made.previews = await mk('previews', CHANNELS.previews, 'Aperçus du contenu disponible', readOnly);
+    made.avis = await mk('avis', CHANNELS.avis, 'Retours des clients', readOnly);
+
+    made.discussion = await mk('discussion', CHANNELS.discussion, 'Discussion entre membres', readWrite);
+    made.giveaways = await mk('giveaways', CHANNELS.giveaways, 'Concours et cadeaux', readOnly);
+    made.tickets = await mk('tickets', CHANNELS.tickets, 'Ouvrez un ticket pour toute demande', readOnly);
+
+    made.logs = await mk('logs', CHANNELS.logs, 'Journal des actions de Lola', staffOnly);
+    made.panel_admin = await mk('panel_admin', CHANNELS.panelAdmin, 'Panneau de gestion — bannissements', staffOnly);
+
+    // Noms courts utilisés plus bas pour la publication des contenus.
+    const verifChannel = made.verification;
+    const bienvenue = made.bienvenue;
+    const services = made.services;
+    const tarifs = made.tarifs;
+    const tarifsLive = made.tarifs_live;
+    const previews = made.previews;
+    const tickets = made.tickets;
+    const panelAdmin = made.panel_admin;
+
+    steps.push(`Salons créés ou réutilisés (${Object.keys(CHANNELS).length})`);
+
+    /* -------------------------------------------- rôles communautaires */
+    // Créés mais jamais attribués : c'est l'onboarding Discord qui s'en
+    // charge. Même stratégie anti-doublon que pour le rôle Vérifié.
+    let rolesCreated = 0;
+    for (const def of COMMUNITY_ROLES) {
+      const savedId = getConfig(guild.id, `role_${def.key}`);
+      let role = savedId ? guild.roles.cache.get(savedId) : null;
+
+      if (!role) {
+        const target = normalizeName(def.name);
+        role = guild.roles.cache.find((r) => normalizeName(r.name) === target) ?? null;
+      }
+
+      if (!role) {
+        role = await guild.roles
+          .create({
+            name: def.name,
+            colors: { primaryColor: def.color },
+            reason: 'Lola — rôle communautaire (onboarding)',
+          })
+          .catch((err) => {
+            console.warn(`[Lola] Rôle « ${def.name} » impossible : ${err.message}`);
+            return null;
+          });
+        if (role) rolesCreated++;
+      }
+
+      if (role) setConfig(guild.id, `role_${def.key}`, role.id);
+    }
+    steps.push(
+      rolesCreated > 0
+        ? `Rôles communautaires créés (${rolesCreated}/${COMMUNITY_ROLES.length})`
+        : 'Rôles communautaires réutilisés'
+    );
 
     /* ------------------------------------------------ contenus par défaut */
+    // Clé `channel` de DEFAULT_CONTENT → salon réel.
     const channelByKey = {
+      reglement: made.reglement,
       bienvenue,
+      annonces: made.annonces,
+      reseaux: made.reseaux,
+      mym: made.mym,
       services,
       tarifs,
       'tarifs-live': tarifsLive,
+      paiement: made.paiement,
       previews,
+      discussion: made.discussion,
     };
 
     for (const [key, block] of Object.entries(DEFAULT_CONTENT)) {

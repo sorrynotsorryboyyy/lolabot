@@ -1,12 +1,22 @@
 import { EmbedBuilder } from 'discord.js';
 
+/**
+ * Palette rose poudré & lilas. Point d'entrée unique des couleurs :
+ * tous les helpers passent par base().
+ *
+ * Trois couleurs vivent hors de cet objet et doivent être modifiées à la
+ * main : les rôles créés dans commands/setup.js, la feuille de style du
+ * transcript HTML (lib/transcript.js) et le fond du captcha
+ * (lib/captcha.js, volontairement sombre pour le contraste).
+ */
 export const COLORS = {
-  brand: 0xc9a227,
-  success: 0x2ecc71,
-  danger: 0xe74c3c,
-  warn: 0xf1c40f,
-  info: 0x5865f2,
-  neutral: 0x2b2d31,
+  brand: 0xf4a6c0, // rose poudré
+  accent: 0xc8a2e0, // lilas
+  success: 0xa8e6cf, // menthe douce
+  danger: 0xff8fa3, // rose corail
+  warn: 0xffd3a5, // pêche
+  info: 0xc8a2e0, // lilas
+  neutral: 0x2b2d31, // fond sombre
 };
 
 const base = (color) => new EmbedBuilder().setColor(color).setTimestamp();
@@ -15,13 +25,16 @@ export const brandEmbed = (title, description) =>
   base(COLORS.brand).setTitle(title).setDescription(description ?? null);
 
 export const successEmbed = (title, description) =>
-  base(COLORS.success).setTitle(`✅ ${title}`).setDescription(description ?? null);
+  base(COLORS.success).setTitle(`🌸 ${title}`).setDescription(description ?? null);
 
 export const errorEmbed = (title, description) =>
-  base(COLORS.danger).setTitle(`❌ ${title}`).setDescription(description ?? null);
+  base(COLORS.danger).setTitle(`💔 ${title}`).setDescription(description ?? null);
 
 export const warnEmbed = (title, description) =>
-  base(COLORS.warn).setTitle(`⚠️ ${title}`).setDescription(description ?? null);
+  base(COLORS.warn).setTitle(`🌙 ${title}`).setDescription(description ?? null);
+
+export const accentEmbed = (title, description) =>
+  base(COLORS.accent).setTitle(title).setDescription(description ?? null);
 
 export const infoEmbed = (title, description) =>
   base(COLORS.info).setTitle(title).setDescription(description ?? null);
