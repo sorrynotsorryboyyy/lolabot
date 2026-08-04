@@ -74,17 +74,23 @@ export async function onOpenSelect(interaction) {
     });
   }
 
-  // Purge d'abord les tickets dont le salon n'existe plus : sans cela un
-  // ticket resté « ouvert » en base bloquerait l'utilisateur pour de bon.
-  const stale = await purgeOrphanTickets(interaction.guild, interaction.user.id);
-  if (stale > 0) {
-    console.warn(
-      `[Lola] ${stale} ticket(s) orphelin(s) fermé(s) pour ${interaction.user.tag} ` +
-        '(salon supprimé hors du bot).'
-    );
+  // Un modal doit être affiché dans les 3 s et n'accepte pas de
+  // deferReply : aucun appel réseau avant showModal(). On teste d'abord
+  // le compteur en base (instantané), et on ne vérifie l'existence
+  // réelle des salons que si l'utilisateur semble bloqué.
+  let open = countOpenTickets(interaction.guildId, interaction.user.id);
+
+  if (open >= MAX_OPEN_PER_USER) {
+    const stale = await purgeOrphanTickets(interaction.guild, interaction.user.id);
+    if (stale > 0) {
+      console.warn(
+        `[Lola] ${stale} ticket(s) orphelin(s) fermé(s) pour ${interaction.user.tag} ` +
+          '(salon supprimé hors du bot).'
+      );
+      open = countOpenTickets(interaction.guildId, interaction.user.id);
+    }
   }
 
-  const open = countOpenTickets(interaction.guildId, interaction.user.id);
   if (open >= MAX_OPEN_PER_USER) {
     const list = listOpenTickets(interaction.guildId, interaction.user.id)
       .map((t) => `• <#${t.channel_id}>`)
