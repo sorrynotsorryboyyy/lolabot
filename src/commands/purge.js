@@ -52,6 +52,11 @@ const normalizeName = (name) =>
 async function collectTargets(guild) {
   const channels = new Map();
 
+  // Le cache peut être périmé : sans rafraîchissement, le repli par nom
+  // ne voit pas les salons et la purge en laisse derrière elle.
+  await guild.channels.fetch().catch(() => {});
+  await guild.roles.fetch().catch(() => {});
+
   // 1. Salons enregistrés en base
   for (const key of CHANNEL_KEYS) {
     const id = getConfig(guild.id, key);

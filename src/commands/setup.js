@@ -52,7 +52,8 @@ async function ensureChannel(guild, key, name, options) {
   }
 
   // Comparaison sur la partie textuelle : retrouve « tarifs » aussi bien
-  // que « 💶・tarifs ».
+  // que « 💶・tarifs ». On interroge le cache rafraîchi par execute() :
+  // s'appuyer sur un cache périmé ferait recréer un salon existant.
   const bare = stripDecoration(name);
   const byName = guild.channels.cache.find(
     (c) => c.type === ChannelType.GuildText && stripDecoration(c.name) === bare
@@ -97,6 +98,14 @@ export async function execute(interaction) {
 
   const { guild } = interaction;
   const me = guild.members.me;
+
+  // Le cache des salons peut être vide ou périmé (démarrage récent,
+  // /purge précédent). Sans ce rafraîchissement, la recherche par nom
+  // échoue et /setup recrée des salons qui existent déjà.
+  await guild.channels.fetch().catch((err) => {
+    console.warn(`[Lola] Rafraîchissement des salons impossible : ${err.message}`);
+  });
+  await guild.roles.fetch().catch(() => {});
 
   // Contrôles préalables : sans ces permissions, /setup échouerait à mi-parcours.
   const required = [
@@ -316,7 +325,7 @@ export async function execute(interaction) {
 
     steps.push('Panneaux installés (vérification, tickets, admin)');
 
-    return interaction.editReply({
+    return safeReply(interaction, {
       embeds: [
         successEmbed(
           'Installation terminée',
@@ -330,7 +339,7 @@ export async function execute(interaction) {
     });
   } catch (err) {
     console.error('[Lola] Échec de /setup :', err);
-    return interaction.editReply({
+    return safeReply(interaction, {
       embeds: [
         errorEmbed(
           'Installation interrompue',
@@ -339,6 +348,26 @@ export async function execute(interaction) {
         ),
       ],
     });
+  }
+}
+
+/**
+ * editReply échoue en 10008 si le salon d'origine a été supprimé
+ * entre-temps (typiquement après /purge). L'installation a pourtant
+ * réussi : on journalise sans faire remonter l'erreur.
+ */
+async function safeReply(interaction, payload) {
+  try {
+    return await interaction.editReply(payload);
+  } catch (err) {
+    if (err.code === 10008 || err.code === 10062) {
+      console.log(
+        "[Lola] /setup terminé, mais le salon d'origine n'existe plus — " +
+          'réponse impossible (sans conséquence).'
+      );
+      return null;
+    }
+    throw err;
   }
 }
 
