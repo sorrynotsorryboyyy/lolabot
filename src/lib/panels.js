@@ -151,6 +151,27 @@ export async function publishContent(guild, key, channel, embed) {
     }
   }
 
+  // L'ID peut manquer alors que le message existe déjà (base vidée par
+  // /purge, /setup interrompu) : on relit le salon pour ne pas empiler
+  // les publications.
+  const title = embed.data?.title;
+  if (title) {
+    const recent = await channel.messages.fetch({ limit: 30 }).catch(() => null);
+    const found = recent?.find(
+      (m) => m.author.id === guild.client.user.id && m.embeds[0]?.title === title
+    );
+    if (found) {
+      await found.edit({ embeds: [embed] });
+      upsertContent({
+        guildId: guild.id,
+        key,
+        channelId: channel.id,
+        messageId: found.id,
+      });
+      return found;
+    }
+  }
+
   const msg = await channel.send({ embeds: [embed] });
   upsertContent({
     guildId: guild.id,

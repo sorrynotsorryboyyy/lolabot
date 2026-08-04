@@ -381,7 +381,36 @@ async function publishPanel(guild, key, channel, payload) {
       return msg;
     }
   }
+
+  // L'ID peut manquer alors qu'un panneau est déjà publié : base vidée
+  // par /purge, ou /setup interrompu avant l'enregistrement. On relit le
+  // salon pour ne pas empiler les panneaux à chaque exécution.
+  const existing = await findOwnPanel(guild, channel, payload);
+  if (existing) {
+    await existing.edit(payload);
+    setConfig(guild.id, `message_${key}`, existing.id);
+    return existing;
+  }
+
   const msg = await channel.send(payload);
   setConfig(guild.id, `message_${key}`, msg.id);
   return msg;
+}
+
+/**
+ * Cherche dans les derniers messages du salon un panneau déjà posté par
+ * le bot, identifié par le titre de son embed.
+ */
+async function findOwnPanel(guild, channel, payload) {
+  const title = payload.embeds?.[0]?.data?.title;
+  if (!title) return null;
+
+  const recent = await channel.messages.fetch({ limit: 30 }).catch(() => null);
+  if (!recent) return null;
+
+  return (
+    recent.find(
+      (m) => m.author.id === guild.client.user.id && m.embeds[0]?.title === title
+    ) ?? null
+  );
 }
