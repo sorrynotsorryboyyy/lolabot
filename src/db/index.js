@@ -24,6 +24,20 @@ db.exec(schema);
 
 console.log(`[Lola] Base de données prête : ${config.dbPath}`);
 
+// Sur Railway, le disque du conteneur est éphémère : sans volume monté,
+// toutes les données disparaissent au redéploiement. On le signale
+// clairement plutôt que de laisser découvrir la perte après coup.
+const onRailway = Boolean(process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID);
+if (onRailway && !config.dbPath.startsWith('/data')) {
+  console.warn(
+    '\n[Lola] ⚠️  ATTENTION : la base est sur un disque ÉPHÉMÈRE.\n' +
+      `       Chemin actuel : ${config.dbPath}\n` +
+      '       Tickets, ventes et avis seront PERDUS au prochain redéploiement.\n' +
+      '       Corrigez : ajoutez un Volume monté sur /data, puis définissez\n' +
+      '       la variable DB_PATH=/data/lola.db\n'
+  );
+}
+
 export const now = () => Date.now();
 
 /* ---------------------------------------------------------------- config */

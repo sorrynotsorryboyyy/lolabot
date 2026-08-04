@@ -26,9 +26,15 @@ for (const cmd of commands) client.commands.set(cmd.data.name, cmd);
 client.once(Events.ClientReady, async (c) => {
   console.log(`[Lola] Connecté en tant que ${c.user.tag}`);
   try {
-    await deployCommands();
+    await deployCommands(c);
   } catch (err) {
     console.error('[Lola] Échec du déploiement des commandes :', err.message);
+    if (err.code === 50001 || err.message.includes('Missing Access')) {
+      console.error(
+        '       Causes possibles : CLIENT_ID ou GUILD_ID erroné, ou bot invité\n' +
+          "       sans le scope « applications.commands » (réinvitation nécessaire)."
+      );
+    }
   }
 });
 

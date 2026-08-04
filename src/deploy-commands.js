@@ -7,9 +7,33 @@ import { commands } from './commands/index.js';
  * Déploie les commandes sur le serveur configuré.
  * Le déploiement « guild » est instantané (contrairement au global, ~1 h).
  */
-export async function deployCommands() {
+export async function deployCommands(client) {
   const rest = new REST({ version: '10' }).setToken(config.token);
   const body = commands.map((c) => c.data.toJSON());
+
+  // Missing Access ne dit pas QUELLE valeur est fausse : on vérifie
+  // d'abord les deux causes possibles pour donner un message utile.
+  if (client) {
+    const realId = client.application?.id ?? client.user?.id;
+    if (realId && realId !== config.clientId) {
+      throw new Error(
+        `CLIENT_ID incorrect : le token appartient à l'application ${realId}, ` +
+          `mais CLIENT_ID vaut ${config.clientId}. Corrigez la variable.`
+      );
+    }
+
+    const guild = client.guilds.cache.get(config.guildId);
+    if (!guild) {
+      const list = [...client.guilds.cache.values()]
+        .map((g) => `${g.name} (${g.id})`)
+        .join(', ');
+      throw new Error(
+        `GUILD_ID ${config.guildId} : le bot n'est pas membre de ce serveur.\n` +
+          `       Serveurs accessibles : ${list || 'aucun'}\n` +
+          `       Réinvitez le bot avec le scope « applications.commands ».`
+      );
+    }
+  }
 
   const data = await rest.put(
     Routes.applicationGuildCommands(config.clientId, config.guildId),
