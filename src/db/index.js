@@ -64,6 +64,15 @@ export function getConfig(guildId, key) {
   return stmtGetConfig.get(guildId, key)?.value ?? null;
 }
 
+/**
+ * Efface une clé de configuration.
+ * Utilisé quand un ID enregistré pointe vers un salon ou un rôle qui
+ * n'existe plus : sans cela, /setup continuerait de le considérer
+ * comme valide et ne le recréerait jamais.
+ */
+export const deleteConfig = (guildId, key) =>
+  db.prepare('DELETE FROM config_entries WHERE guild_id = ? AND key = ?').run(guildId, key);
+
 /* --------------------------------------------------------------- captcha */
 
 const stmtSaveCaptcha = db.prepare(

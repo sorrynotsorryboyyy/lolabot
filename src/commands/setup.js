@@ -5,7 +5,15 @@ import {
   MessageFlags,
 } from 'discord.js';
 import { CHANNELS, CATEGORIES, CHANNEL_PARENTS, ROLES, COMMUNITY_ROLES } from '../config.js';
-import { setConfig, getConfig, upsertContent, getContent, listPricing, addPricing } from '../db/index.js';
+import {
+  setConfig,
+  getConfig,
+  deleteConfig,
+  upsertContent,
+  getContent,
+  listPricing,
+  addPricing,
+} from '../db/index.js';
 import { DEFAULT_CONTENT, DEFAULT_PRICING } from '../lib/defaultContent.js';
 import {
   verificationPanel,
@@ -49,14 +57,24 @@ async function ensureChannel(guild, key, name, options) {
   if (savedId) {
     const existing = await guild.channels.fetch(savedId).catch(() => null);
     if (existing) return syncChannel(existing, name, options);
+
+    // Salon supprimé à la main : l'ID enregistré est périmé. Sans cette
+    // purge — du cache ET de la base — discord.js peut conserver une
+    // entrée fantôme, et /setup ne recréerait jamais le salon.
+    guild.channels.cache.delete(savedId);
+    deleteConfig(guild.id, `channel_${key}`);
+    console.log(`[Lola] Salon « ${name} » introuvable (supprimé ?) — il va être recréé.`);
   }
 
   // Comparaison sur la partie textuelle : retrouve « tarifs » aussi bien
-  // que « 💶・tarifs ». On interroge le cache rafraîchi par execute() :
-  // s'appuyer sur un cache périmé ferait recréer un salon existant.
+  // que « 💶・tarifs ». Le cache est rafraîchi par execute() ; on écarte
+  // malgré tout les entrées fantômes en revalidant chaque candidat.
   const bare = stripDecoration(name);
   const byName = guild.channels.cache.find(
-    (c) => c.type === ChannelType.GuildText && stripDecoration(c.name) === bare
+    (c) =>
+      c.type === ChannelType.GuildText &&
+      stripDecoration(c.name) === bare &&
+      guild.channels.cache.has(c.id)
   );
   if (byName) {
     setConfig(guild.id, `channel_${key}`, byName.id);
@@ -65,6 +83,7 @@ async function ensureChannel(guild, key, name, options) {
 
   const created = await guild.channels.create({ name, ...options });
   setConfig(guild.id, `channel_${key}`, created.id);
+  console.log(`[Lola] Salon « ${name} » créé.`);
   return created;
 }
 
@@ -83,11 +102,18 @@ async function ensureCategory(guild, key, name, options = {}) {
       }
       return existing;
     }
+    // Catégorie supprimée : même purge que pour les salons.
+    guild.channels.cache.delete(savedId);
+    deleteConfig(guild.id, `category_${key}`);
+    console.log(`[Lola] Catégorie « ${name} » introuvable — elle va être recréée.`);
   }
 
   const bare = stripDecoration(name);
   const byName = guild.channels.cache.find(
-    (c) => c.type === ChannelType.GuildCategory && stripDecoration(c.name) === bare
+    (c) =>
+      c.type === ChannelType.GuildCategory &&
+      stripDecoration(c.name) === bare &&
+      guild.channels.cache.has(c.id)
   );
   if (byName) {
     setConfig(guild.id, `category_${key}`, byName.id);
@@ -104,10 +130,12 @@ async function ensureCategory(guild, key, name, options = {}) {
       ...options,
     });
     setConfig(guild.id, `category_${key}`, created.id);
+    console.log(`[Lola] Catégorie « ${name} » créée.`);
     return created;
   } catch (err) {
-    console.warn(`[Lola] Création de la catégorie « ${name} » impossible : ${err.message}`);
-    return null;
+    // Renvoyer null ferait créer tous les salons sans parent, donc en
+    // haut du serveur. On propage pour interrompre /setup proprement.
+    throw new Error(`Création de la catégorie « ${name} » impossible : ${err.message}`);
   }
 }
 
@@ -124,16 +152,28 @@ async function syncChannel(channel, name, options = {}) {
   if (options.permissionOverwrites) {
     patch.permissionOverwrites = options.permissionOverwrites;
   }
-  if (options.parent !== undefined && channel.parentId !== options.parent) {
-    patch.parent = options.parent;
-  }
+  // Rapatrie un salon mal placé (créé hors catégorie par une version
+  // précédente, ou déplacé à la main).
+  const wantsMove = options.parent != null && channel.parentId !== options.parent;
+  if (wantsMove) patch.parent = options.parent;
 
   if (Object.keys(patch).length === 0) return channel;
 
-  return channel.edit({ ...patch, reason: 'Lola — synchronisation /setup' }).catch((err) => {
-    console.warn(`[Lola] Mise à jour de #${channel.name} impossible : ${err.message}`);
-    return channel;
-  });
+  const updated = await channel
+    .edit({ ...patch, reason: 'Lola — synchronisation /setup' })
+    .catch((err) => {
+      console.warn(`[Lola] Mise à jour de #${channel.name} impossible : ${err.message}`);
+      return channel;
+    });
+
+  if (wantsMove && updated.parentId !== options.parent) {
+    console.warn(
+      `[Lola] #${updated.name} n'a pas pu être rangé dans sa catégorie ` +
+        '(vérifiez la permission « Gérer les salons »).'
+    );
+  }
+
+  return updated;
 }
 
 export async function execute(interaction) {
@@ -240,16 +280,27 @@ export async function execute(interaction) {
     ];
 
     /* ----------------------------------------------------- catégories */
+    // Créées avant les salons : sans elles, tout se retrouverait en haut
+    // du serveur. Une erreur ici interrompt /setup (ensureCategory lève).
     const categoryIds = {};
+    let position = 0;
     for (const [key, name] of Object.entries(CATEGORIES)) {
       const cat = await ensureCategory(guild, key, name, {
+        position: position++,
         permissionOverwrites: key === 'staff' || key === 'tickets' ? staffOnly : undefined,
       });
-      categoryIds[key] = cat?.id ?? null;
+      categoryIds[key] = cat.id;
     }
     steps.push(`Catégories créées ou réutilisées (${Object.keys(CATEGORIES).length})`);
 
-    const parentOf = (channelKey) => categoryIds[CHANNEL_PARENTS[channelKey]] ?? null;
+    const parentOf = (channelKey) => {
+      const catKey = CHANNEL_PARENTS[channelKey];
+      if (!catKey) {
+        console.warn(`[Lola] Aucune catégorie définie pour « ${channelKey} ».`);
+        return null;
+      }
+      return categoryIds[catKey] ?? null;
+    };
 
     /* --------------------------------------------------------- salons */
     const made = {};
