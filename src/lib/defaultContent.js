@@ -36,30 +36,6 @@ export const DEFAULT_CONTENT = {
       '> Activez les notifications pour ne rien manquer 🔔',
   },
 
-  reseaux: {
-    channel: 'reseaux',
-    title: '🌐 Mes réseaux',
-    body:
-      'Retrouvez-moi ailleurs 💗\n\n' +
-      '**𝕏 · Twitter**\n_à compléter_\n\n' +
-      '**📸 · Instagram**\n_à compléter_\n\n' +
-      '**💎 · MYM**\n_à compléter_\n\n' +
-      '**🎬 · Autres**\n_à compléter_\n\n' +
-      '> Modifiable avec `/contenu modifier` ✨',
-  },
-
-  mym: {
-    channel: 'mym',
-    title: '💎 Mon MYM',
-    body:
-      'Toutes mes nouvelles publications MYM sont annoncées ici 💫\n\n' +
-      '**Pourquoi s\'abonner ?**\n' +
-      '• 📸 Du contenu exclusif, publié régulièrement\n' +
-      '• 💬 Des échanges en privé\n' +
-      '• ✨ Des demandes personnalisées\n\n' +
-      '> Le lien de mon profil est dans <#RESEAUX> 🎀',
-  },
-
   paiement: {
     channel: 'paiement',
     title: '💳 Moyens de paiement',

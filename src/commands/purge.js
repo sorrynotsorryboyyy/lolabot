@@ -23,8 +23,6 @@ const CHANNEL_KEYS = [
   'channel_verification',
   'channel_bienvenue',
   'channel_annonces',
-  'channel_reseaux',
-  'channel_mym',
   'channel_services',
   'channel_tarifs',
   'channel_tarifs_live',
@@ -34,7 +32,12 @@ const CHANNEL_KEYS = [
   'channel_discussion',
   'channel_giveaways',
   'channel_tickets',
-  'channel_logs',
+  'channel_logs', // ancien salon unique, conservé pour les installations antérieures
+  'channel_logs_ventes',
+  'channel_logs_arrivees',
+  'channel_logs_moderation',
+  'channel_logs_tickets',
+  'channel_procedures',
   'channel_panel_admin',
 ];
 

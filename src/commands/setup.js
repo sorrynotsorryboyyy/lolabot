@@ -286,8 +286,6 @@ export async function execute(interaction) {
 
     made.bienvenue = await mk('bienvenue', CHANNELS.bienvenue, 'Présentation et informations', readOnly);
     made.annonces = await mk('annonces', CHANNELS.annonces, 'Actualités et nouveautés', readOnly);
-    made.reseaux = await mk('reseaux', CHANNELS.reseaux, 'Mes autres plateformes', readOnly);
-    made.mym = await mk('mym', CHANNELS.mym, 'Mes publications MYM', readOnly);
 
     made.services = await mk('services', CHANNELS.services, 'Les prestations proposées', readOnly);
     made.tarifs = await mk('tarifs', CHANNELS.tarifs, 'Grille tarifaire — photos', readOnly);
@@ -300,7 +298,12 @@ export async function execute(interaction) {
     made.giveaways = await mk('giveaways', CHANNELS.giveaways, 'Concours et cadeaux', readOnly);
     made.tickets = await mk('tickets', CHANNELS.tickets, 'Ouvrez un ticket pour toute demande', readOnly);
 
-    made.logs = await mk('logs', CHANNELS.logs, 'Journal des actions de Lola', staffOnly);
+    // Journaux séparés par nature, pour rester lisibles.
+    made.logs_ventes = await mk('logs_ventes', CHANNELS.logsVentes, 'Journal des ventes', staffOnly);
+    made.logs_arrivees = await mk('logs_arrivees', CHANNELS.logsArrivees, 'Arrivées, vérifications et anti-raid', staffOnly);
+    made.logs_moderation = await mk('logs_moderation', CHANNELS.logsModeration, 'Bannissements et verrouillages', staffOnly);
+    made.logs_tickets = await mk('logs_tickets', CHANNELS.logsTickets, 'Archives des tickets et transcripts', staffOnly);
+    made.procedures = await mk('procedures', CHANNELS.procedures, 'Documents et procédures internes', staffOnly);
     made.panel_admin = await mk('panel_admin', CHANNELS.panelAdmin, 'Panneau de gestion — bannissements', staffOnly);
 
     // Noms courts utilisés plus bas pour la publication des contenus.
@@ -356,8 +359,6 @@ export async function execute(interaction) {
       reglement: made.reglement,
       bienvenue,
       annonces: made.annonces,
-      reseaux: made.reseaux,
-      mym: made.mym,
       services,
       tarifs,
       'tarifs-live': tarifsLive,

@@ -65,7 +65,6 @@ Lancez ensuite `/setup` sur votre serveur.
 | `/tarif ajouter` · `liste` · `supprimer` | Gérer le serveur | Gère les deux grilles tarifaires |
 | `/lockdown on` · `off` · `statut` | Gérer le serveur | Suspend ou rétablit la vérification |
 | `/giveaway lancer` · `terminer` · `relancer` · `liste` | Gérer le serveur | Concours avec tirage automatique. Durées : `30m`, `6h`, `3j`. Les giveaways en cours survivent à un redéploiement. |
-| `/mym poster` | Gérer le serveur | Annonce une publication MYM dans le salon dédié (message, lien, image, ping optionnel) |
 
 ## Salons créés par `/setup`
 
@@ -74,11 +73,15 @@ Lancez ensuite `/setup` sur votre serveur.
 | Catégorie | Salons |
 |---|---|
 | 🌸 ENTRÉE | `📜・reglement` · `🔐・verification` |
-| 💗 DÉCOUVRIR | `👋・bienvenue` · `📢・annonces` · `🌐・reseaux` · `💎・mym` |
+| 💗 DÉCOUVRIR | `👋・bienvenue` · `📢・annonces` |
 | 🛍️ BOUTIQUE | `✨・services` · `💗・tarifs` · `🎥・tarifs-live` · `💳・paiement` · `👀・previews` · `⭐・avis` |
 | 💬 COMMUNAUTÉ | `💭・discussion` (écriture) · `🎁・giveaways` · `🎟️・tickets` |
 | 🎟️ TICKETS | salons privés créés à la demande |
-| 🔒 STAFF | `📁・logs-lola` · `🛡️・panel-admin` |
+| 🔒 STAFF | `💰・logs-ventes` · `👋・logs-arrivees` · `🔨・logs-moderation` · `📋・archives-tickets` · `💼・procedures` · `🛡️・panel-admin` |
+
+**Journaux séparés** — chaque type d'événement a son salon : ventes, arrivées/vérifications/anti-raid, bannissements/verrouillages, et archives de tickets (avec les transcripts HTML). `💼・procedures` est un salon libre pour vos documents internes.
+
+> Le montant des ventes n'apparaît **jamais** dans le ticket : la confirmation est visible de vous seule, le détail va dans `💰・logs-ventes`.
 
 `🔐・verification` est le seul salon visible **avant** vérification, et disparaît une fois le captcha validé. Les avis sont publiés **anonymement**.
 

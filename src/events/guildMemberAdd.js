@@ -65,7 +65,8 @@ export async function handleGuildMemberAdd(member) {
           errorEmbed(
             'Compte trop récent expulsé',
             `${member.user.tag} (\`${member.id}\`)\nCompte créé il y a **${age.toFixed(1)} jour(s)**.`
-          )
+          ),
+          'arrivees'
         );
         return;
       }
@@ -88,7 +89,8 @@ export async function handleGuildMemberAdd(member) {
           `**${count}** arrivées en ${config.antiRaid.joinWindowSeconds} secondes.\n\n` +
             'La vérification est suspendue : les nouveaux membres ne peuvent plus obtenir le rôle.\n' +
             'Utilisez `/lockdown off` pour rétablir l\'accès.'
-        )
+        ),
+        'arrivees'
       );
     }
 
@@ -109,7 +111,8 @@ export async function handleGuildMemberAdd(member) {
         `${member.user} (\`${member.user.tag}\`)\nCompte créé il y a **${daysSince(
           member.user.createdTimestamp
         ).toFixed(0)}** jour(s).`
-      )
+      ),
+      'arrivees'
     );
   } catch (err) {
     console.error('[Lola] Erreur guildMemberAdd :', err);

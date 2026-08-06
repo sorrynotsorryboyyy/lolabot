@@ -204,7 +204,8 @@ export async function onSubmit(interaction) {
 
   await sendLog(
     interaction.guild,
-    successEmbed('Membre vérifié', `${interaction.user} (\`${interaction.user.tag}\`) a validé le captcha.`)
+    successEmbed('Membre vérifié', `${interaction.user} (\`${interaction.user.tag}\`) a validé le captcha.`),
+    'arrivees'
   );
 
   return interaction.reply({

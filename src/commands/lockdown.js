@@ -63,7 +63,8 @@ export async function execute(interaction) {
     interaction.guild,
     enable
       ? warnEmbed('Verrouillage activé', `Par ${interaction.user}`)
-      : successEmbed('Verrouillage levé', `Par ${interaction.user}`)
+      : successEmbed('Verrouillage levé', `Par ${interaction.user}`),
+    'moderation'
   );
 
   return interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral });

@@ -65,8 +65,6 @@ export const CHANNELS = {
   // DÉCOUVRIR
   bienvenue: '👋・bienvenue',
   annonces: '📢・annonces',
-  reseaux: '🌐・reseaux',
-  mym: '💎・mym',
   // BOUTIQUE
   services: '✨・services',
   tarifs: '💗・tarifs',
@@ -78,8 +76,12 @@ export const CHANNELS = {
   discussion: '💭・discussion',
   giveaways: '🎁・giveaways',
   tickets: '🎟️・tickets',
-  // STAFF
-  logs: '📁・logs-lola',
+  // STAFF — journaux séparés par nature
+  logsVentes: '💰・logs-ventes',
+  logsArrivees: '👋・logs-arrivees',
+  logsModeration: '🔨・logs-moderation',
+  logsTickets: '📋・archives-tickets',
+  procedures: '💼・procedures',
   panelAdmin: '🛡️・panel-admin',
 };
 
@@ -99,8 +101,6 @@ export const CHANNEL_PARENTS = {
   verification: 'entree',
   bienvenue: 'decouvrir',
   annonces: 'decouvrir',
-  reseaux: 'decouvrir',
-  mym: 'decouvrir',
   services: 'boutique',
   tarifs: 'boutique',
   tarifs_live: 'boutique',
@@ -110,7 +110,11 @@ export const CHANNEL_PARENTS = {
   discussion: 'communaute',
   giveaways: 'communaute',
   tickets: 'communaute',
-  logs: 'staff',
+  logs_ventes: 'staff',
+  logs_arrivees: 'staff',
+  logs_moderation: 'staff',
+  logs_tickets: 'staff',
+  procedures: 'staff',
   panel_admin: 'staff',
 };
 

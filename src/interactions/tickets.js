@@ -28,7 +28,7 @@ import {
   warnEmbed,
   formatDate,
 } from '../lib/embeds.js';
-import { sendLog } from '../lib/logger.js';
+import { sendLog, resolveLogChannelId } from '../lib/logger.js';
 import { fetchAllMessages, buildTranscript } from '../lib/transcript.js';
 import { buildReviewPrompt } from './avis.js';
 
@@ -263,7 +263,8 @@ export async function onCreateSubmit(interaction, category) {
     infoEmbed(
       'Ticket ouvert',
       `**#${ticketId}** — ${meta.label}\nPar ${interaction.user} dans ${channel}`
-    )
+    ),
+    'tickets'
   );
 
   return interaction.editReply({
@@ -352,11 +353,12 @@ export async function onCloseConfirm(interaction) {
       'Ticket fermé',
       `**#${ticket.id}** — ${ticket.category}\n` +
         `Ouvert par <@${ticket.user_id}>\nFermé par ${interaction.user}${salesLine}`
-    )
+    ),
+    'tickets'
   );
 
-  // Le transcript part dans les logs (le salon va disparaître).
-  const logsId = getConfig(interaction.guildId, 'channel_logs');
+  // Le transcript part dans les archives (le salon va disparaître).
+  const logsId = resolveLogChannelId(interaction.guildId, 'tickets');
   if (logsId) {
     const logs = await interaction.guild.channels.fetch(logsId).catch(() => null);
     if (logs?.isTextBased()) await logs.send({ files: [file] }).catch(() => {});
@@ -489,15 +491,21 @@ export async function onSaleSubmit(interaction) {
     successEmbed(
       'Vente enregistrée',
       `**${item}** — **${amount.toFixed(2)} €** (${status})\nTicket #${ticket.id}, client <@${ticket.user_id}>`
-    )
+    ),
+    'ventes'
   );
 
+  // Éphémère : le client ne doit pas voir le montant dans son ticket.
+  // Discord impose une réponse à toute interaction, d'où ce message
+  // visible de vous seule.
   return interaction.reply({
     embeds: [
       successEmbed(
         'Vente enregistrée',
-        `**${item}**\nMontant : **${amount.toFixed(2)} €**\nStatut : **${status}**`
+        `**${item}**\nMontant : **${amount.toFixed(2)} €**\nStatut : **${status}**\n\n` +
+          '_Visible de vous seule — le détail est dans les logs de ventes._'
       ),
     ],
+    flags: MessageFlags.Ephemeral,
   });
 }

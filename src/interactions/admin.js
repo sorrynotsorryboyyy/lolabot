@@ -165,7 +165,8 @@ export async function onBanSubmit(interaction) {
       'Membre banni',
       `**${targetTag}** (\`${userId}\`)\n**Raison :** ${reason}\n**Par :** ${interaction.user}` +
         (days > 0 ? `\n**Messages supprimés :** ${days} jour(s)` : '')
-    )
+    ),
+    'moderation'
   );
 
   return interaction.editReply({
@@ -226,7 +227,8 @@ export async function onUnbanSubmit(interaction) {
 
   await sendLog(
     interaction.guild,
-    successEmbed('Bannissement révoqué', `\`${userId}\` a été débanni par ${interaction.user}.`)
+    successEmbed('Bannissement révoqué', `\`${userId}\` a été débanni par ${interaction.user}.`),
+    'moderation'
   );
 
   return interaction.editReply({

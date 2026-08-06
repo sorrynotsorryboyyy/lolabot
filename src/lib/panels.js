@@ -24,8 +24,6 @@ export function resolveChannelRefs(guildId, text) {
     VERIFICATION: 'channel_verification',
     REGLEMENT: 'channel_reglement',
     ANNONCES: 'channel_annonces',
-    RESEAUX: 'channel_reseaux',
-    MYM: 'channel_mym',
     PAIEMENT: 'channel_paiement',
     DISCUSSION: 'channel_discussion',
     GIVEAWAYS: 'channel_giveaways',
