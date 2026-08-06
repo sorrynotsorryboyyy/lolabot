@@ -265,9 +265,24 @@ export async function execute(interaction) {
     // Salons staff : invisibles pour tout le monde sauf permissions serveur.
     const staffOnly = [{ id: everyone.id, deny: [PermissionFlagsBits.ViewChannel] }];
 
-    // Salon de discussion : les vérifiés peuvent écrire.
+    // Salon de discussion.
+    //
+    // En mode communauté, Discord EXIGE qu'au moins un salon reste
+    // lisible ET inscriptible par @everyone, sinon toute modification
+    // est rejetée (« Onboarding requires at least one channel where
+    // @everyone can read and send messages »). #discussion joue ce rôle :
+    // @everyone y garde lecture et écriture, l'accès réel restant filtré
+    // en amont par #verification (les non-vérifiés ne voient rien d'autre).
     const readWrite = [
-      { id: everyone.id, deny: [PermissionFlagsBits.ViewChannel] },
+      {
+        id: everyone.id,
+        allow: [
+          PermissionFlagsBits.ViewChannel,
+          PermissionFlagsBits.ReadMessageHistory,
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.AddReactions,
+        ],
+      },
       {
         id: verifiedRole.id,
         allow: [
@@ -304,13 +319,25 @@ export async function execute(interaction) {
 
     /* --------------------------------------------------------- salons */
     const made = {};
-    const mk = (key, chanName, topic, perms) =>
-      ensureChannel(guild, key, chanName, {
-        type: ChannelType.GuildText,
-        topic,
-        parent: parentOf(key),
-        permissionOverwrites: perms,
-      });
+    const channelFailures = [];
+
+    // Un salon en échec (permissions, contrainte du mode communauté...)
+    // ne doit pas interrompre la création des suivants : sans ce filet,
+    // une erreur sur #discussion empêchait la création des salons STAFF.
+    const mk = async (key, chanName, topic, perms) => {
+      try {
+        return await ensureChannel(guild, key, chanName, {
+          type: ChannelType.GuildText,
+          topic,
+          parent: parentOf(key),
+          permissionOverwrites: perms,
+        });
+      } catch (err) {
+        console.warn(`[Lola] Salon « ${chanName} » impossible : ${err.message}`);
+        channelFailures.push(`${chanName} : ${err.message}`);
+        return null;
+      }
+    };
 
     made.reglement = await mk(
       'reglement',
@@ -452,23 +479,34 @@ export async function execute(interaction) {
       await publishContent(guild, key, channel, embed);
     }
 
-    await publishContent(guild, 'tarifs_intro', tarifs, pricingEmbed(guild.id, 'photo'));
-    await publishContent(guild, 'tarifs_live_intro', tarifsLive, pricingEmbed(guild.id, 'live'));
+    if (tarifs) {
+      await publishContent(guild, 'tarifs_intro', tarifs, pricingEmbed(guild.id, 'photo'));
+    }
+    if (tarifsLive) {
+      await publishContent(guild, 'tarifs_live_intro', tarifsLive, pricingEmbed(guild.id, 'live'));
+    }
 
     steps.push('Contenus publiés (bienvenue, services, tarifs, previews)');
 
     /* ---------------------------------------------------------- panneaux */
-    await publishPanel(guild, 'panel_verification', verifChannel, verificationPanel());
-    await publishPanel(guild, 'panel_tickets', tickets, ticketPanel());
-    await publishPanel(guild, 'panel_admin', panelAdmin, adminPanel());
+    if (verifChannel) await publishPanel(guild, 'panel_verification', verifChannel, verificationPanel());
+    if (tickets) await publishPanel(guild, 'panel_tickets', tickets, ticketPanel());
+    if (panelAdmin) await publishPanel(guild, 'panel_admin', panelAdmin, adminPanel());
 
     steps.push('Panneaux installés (vérification, tickets, admin)');
+
+    // Les échecs sont signalés plutôt que passés sous silence : sans
+    // cela, un salon manquant ne se remarque qu'à l'usage.
+    if (channelFailures.length) {
+      steps.push('', `⚠️ **${channelFailures.length} salon(s) en échec :**`);
+      steps.push(...channelFailures.map((f) => `  ${f}`));
+    }
 
     return safeReply(interaction, {
       embeds: [
         successEmbed(
           'Installation terminée',
-          steps.map((s) => `• ${s}`).join('\n') +
+          steps.map((s) => (s === '' || s.startsWith(' ') || s.startsWith('⚠️') ? s : `• ${s}`)).join('\n') +
             '\n\n**Étapes suivantes**\n' +
             `• Placez le rôle de Lola **au-dessus** de « ${ROLES.verified} »\n` +
             `• Personnalisez les textes avec \`/contenu\`\n` +
